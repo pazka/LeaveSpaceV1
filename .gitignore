@@ -1,0 +1,88 @@
+# UNity gitignore 
+# A gitignore file for Unity projects.
+# =============== #
+# Unity generated #
+# =============== #
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+# =============== #
+# Visual Studio / MonoDevelop generated #
+# =============== #
+/[Ee]xported[Oo]bj/
+/*.svd
+/*.userprefs
+/*.csproj
+/*.pidb
+/*.suo
+/*.sln
+/*.user
+/*.unityproj
+/*.booproj
+# =============== #
+# OS generated #
+# =============== #
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+[Tt]humbs.db
+# =============== #
+# Unity3D generated #
+# =============== #
+/[Bb]uild
+/[Bb]uilds
+/[Ll]ibrary
+/[Ll]ocal[Cc]ache
+/[Oo]bj
+/[Tt]emp
+/[Uu]nityGenerated
+/[Uu]nityVS
+/[Uu]ser[Ss]ettings
+/[Vv]ersion[Aa]ssets
+/[Ww]orksheets
+
+# Unity generated files
+/[Uu]nityGenerated/
+
+# Visual Studio / Visual Studio Code generated files
+.vs/
+.vscode/
+
+# User-specific files
+/[Ss]aved[ -][Ll]ayouts/
+/[Aa]ssets/[Ss]treamingAssets/GoogleMobileAdsSettings.asset
+/[Aa]ssets/Plugins/[Aa]ndroid/[Gg]oogleMobileAdsPlugin/
+/[Aa]ssets/GoogleService-Info.plist
+/[Aa]ssets/GoogleService-Info-staging.plist
+/[Aa]ssets/[Ss]cenes/Intro.unity
+
+# Build generated files
+/Builds/
+
+# Miscellaneous files
+*.tmp
+*.bak
+*.unityproj
+*.sln
+*.csproj
+*.pidb
+*.suo
+*.user
+*.userprefs
+*.log
+*.vscode/
+*.pidb.meta
+
+
+# Rider generated files
+.idea/
+*.sln.iml
+*.csproj.rider
