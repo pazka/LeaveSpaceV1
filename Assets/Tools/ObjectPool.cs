@@ -1,7 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Assets
+namespace Tools
 {
     public abstract class ObjectPool<T> : MonoBehaviour where T : new()
     {

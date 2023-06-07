@@ -1,27 +1,25 @@
+using Tools;
 using UnityEngine;
 
-namespace Assets
+public class VisualPool : ObjectPool<GameObject>
 {
-    public class VisualPool : ObjectPool<GameObject>
+    public GameObject ressource;
+
+    protected override GameObject CreateOneObject()
     {
-        public GameObject batRessource;
-
-        protected override GameObject CreateOneObject()
-        {
-            var obj = Instantiate(batRessource);
-            obj.SetActive(false);
+        var obj = Instantiate(ressource);
+        obj.SetActive(false);
             
-            return obj;
-        }
+        return obj;
+    }
 
-        protected override void DeactivateOneObject(GameObject obj)
-        {
-            obj.SetActive(false);
-        }
+    protected override void DeactivateOneObject(GameObject obj)
+    {
+        obj.SetActive(false);
+    }
 
-        protected override void RemoveOneObject(GameObject obj)
-        {
-            Destroy(obj);
-        }
+    protected override void RemoveOneObject(GameObject obj)
+    {
+        Destroy(obj);
     }
 }
