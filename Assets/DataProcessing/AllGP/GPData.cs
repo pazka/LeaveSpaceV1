@@ -5,8 +5,11 @@ namespace DataProcessing.AllGP
 {
     public class AllGPData : Generic.TimedData
     {
-        public AllGPData(string raw, float x, float y, float t) : base(raw, x, y, t)
+        public AllGpJsonData RawJson { get; private set; }
+
+        public AllGPData(AllGpJsonData rawJson, float x, float y, float t) : base(JsonUtility.ToJson(rawJson), x, y, t)
         {
+            this.RawJson = rawJson;
         }
     }
 }

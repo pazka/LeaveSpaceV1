@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using Unity.VisualScripting;
 
 namespace DataProcessing.Generic
 {
@@ -16,13 +17,13 @@ namespace DataProcessing.Generic
     /// 
     /// </summary>
 
-    public interface IDataConverter
+    public interface IDataConverter<T> where T : ITimedData
     {
         void Init(int screenBoundX, int screenBoundY);
         void Clean();
-        IData GetNextData();
-        IEnumerable<IData> GetAllData();
-        IData[] GetDataBounds();
-        IDataReader<ITimedData> GetDataReader();
+        T GetNextData();
+        IEnumerable<T> GetAllData();
+        (T Min,T Max) GetDataBounds();
+        IDataReader<T> GetDataReader();
     }
 }

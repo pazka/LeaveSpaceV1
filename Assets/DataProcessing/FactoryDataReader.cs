@@ -11,16 +11,16 @@ public static class FactoryDataReader
         ALLGP
     }
 
-    private static readonly Dictionary<AvailableDataReaderTypes, IDataReader<TimedData>> instances =
-        new Dictionary<AvailableDataReaderTypes, IDataReader<TimedData>>();
+    private static readonly Dictionary<AvailableDataReaderTypes, IDataReader<ITimedData>> instances =
+        new Dictionary<AvailableDataReaderTypes, IDataReader<ITimedData>>();
 
-    public static IDataReader<TimedData> GetInstance(AvailableDataReaderTypes dataReaderType)
+    public static IDataReader<ITimedData> GetInstance(AvailableDataReaderTypes dataReaderType)
     {
         switch (dataReaderType)
         {
             case AvailableDataReaderTypes.ALLGP:
                 if (!instances.ContainsKey(dataReaderType))
-                    instances.Add(dataReaderType, new AllGPDataReader());
+                    instances.Add(dataReaderType, new AllGPDataReader() as IDataReader<ITimedData>);
 
                 return instances[dataReaderType];
 

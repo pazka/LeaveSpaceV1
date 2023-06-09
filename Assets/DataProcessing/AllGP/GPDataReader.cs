@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DataProcessing.AllGP
 {
-    class AllGpJsonMetadata
+    abstract class AllGpJsonMetadata
     {
         public int Total;
         public int Limit;
@@ -16,7 +16,7 @@ namespace DataProcessing.AllGP
         public string DataSize;
     }
 
-    class AllGpJsonData
+    public abstract class AllGpJsonData
     {
         public string CCSDS_OMM_VERS;
         public string COMMENT;
@@ -66,7 +66,7 @@ namespace DataProcessing.AllGP
         public List<AllGpJsonData> data;
     }
 
-    public class AllGPDataReader : IDataReader<TimedData>
+    public class AllGPDataReader : IDataReader<AllGPData>
     {
         List<AllGpJsonData> allRawData;
         private int currentIndex;
@@ -95,27 +95,49 @@ namespace DataProcessing.AllGP
             currentIndex = 0;
         }
 
-        public TimedData GetData()
+        private bool DataIsToKeep(AllGpJsonData data)
+        {
+            return IsDecayed(data.DECAY_DATE);
+        }
+
+        public AllGPData GetData()
         {
             if (allRawData.Count == 0) ReadFile();
+
+            if (currentIndex >= allRawData.Count) return null;
+
             var currRawData = allRawData[currentIndex];
-            var position = GetXYFromGeoSpatialData(
-                currRawData.MEAN_MOTION,
-                currRawData.ECCENTRICITY,
-                currRawData.INCLINATION,
-                currRawData.RA_OF_ASC_NODE,
-                currRawData.ARG_OF_PERICENTER,
-                currRawData.MEAN_ANOMALY,
-                currRawData.SEMIMAJOR_AXIS,
-                currRawData.PERIAPSIS
+
+            while (!DataIsToKeep(currRawData))
+            {
+                currentIndex++;
+                if (currentIndex >= allRawData.Count) return null;
+                currRawData = allRawData[currentIndex];
+            }
+
+            var newData = new AllGPData(currRawData,
+                -1,
+                -1,
+                GetDateInSecondsFromEpochJulianDate(currRawData.EPOCH)
             );
-            var newData = new TimedData(JsonUtility.ToJson(currRawData),
-                    position.Item1,
-                    position.Item2,
-                    GetDateInSecondsFromEpochJulianDate(currRawData.EPOCH)
-                );
-            
+
             return newData;
+        }
+
+        private bool IsDecayed(string decayDate)
+        {
+            //decayDate is in the format "YYY-MM-DD"
+            if (decayDate == null) return false;
+            if (string.IsNullOrEmpty(decayDate)) return false;
+
+            var decayDateSplit = decayDate.Split('-');
+            var decayYear = int.Parse(decayDateSplit[0]);
+            var decayMonth = int.Parse(decayDateSplit[1]);
+            var decayDay = int.Parse(decayDateSplit[2]);
+            var decayDateDateTime = new DateTime(decayYear, decayMonth, decayDay);
+            var today = DateTime.Now;
+
+            return decayDateDateTime < today;
         }
 
         private static float GetDateInSecondsFromEpochJulianDate(string epoch)
@@ -126,31 +148,6 @@ namespace DataProcessing.AllGP
             return (float)epochDate.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
         }
 
-        private static (float, float) GetXYFromGeoSpatialData(
-            string MEAN_MOTION,
-            string ECCENTRICITY,
-            string INCLINATION,
-            string RA_OF_ASC_NODE,
-            string ARG_OF_PERICENTER,
-            string MEAN_ANOMALY,
-            string SEMIMAJOR_AXIS,
-            string PERIAPSIS
-        )
-        {
-            var meanMotion = float.Parse(MEAN_MOTION);
-            var eccentricity = float.Parse(ECCENTRICITY);
-            var inclination = float.Parse(INCLINATION);
-            var raOfAscNode = float.Parse(RA_OF_ASC_NODE);
-            var argOfPericenter = float.Parse(ARG_OF_PERICENTER);
-            var meanAnomaly = float.Parse(MEAN_ANOMALY);
-            var semiMajorAxis = float.Parse(SEMIMAJOR_AXIS);
-            var periapsis = float.Parse(PERIAPSIS);
-
-            var x = (int)(semiMajorAxis * Mathf.Cos(meanAnomaly));
-            var y = (int)(semiMajorAxis * Mathf.Sin(meanAnomaly));
-
-            return (x * eccentricity, y * eccentricity);
-        }
 
         public void GoToNextData()
         {
