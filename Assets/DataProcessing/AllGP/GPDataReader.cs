@@ -115,10 +115,14 @@ namespace DataProcessing.AllGP
                 currRawData = allRawData[currentIndex];
             }
 
+            float potentialDate = GetDateInSecondsFromEpoch(currRawData.EPOCH);
+            if (!string.IsNullOrEmpty(currRawData.LAUNCH_DATE))
+                potentialDate = GetDateInSecondsFromLaunchDate(currRawData.LAUNCH_DATE);
+
             var newData = new AllGPData(currRawData,
                 -1,
                 -1,
-                GetDateInSecondsFromEpochJulianDate(currRawData.EPOCH)
+                potentialDate
             );
 
             return newData;
@@ -140,12 +144,40 @@ namespace DataProcessing.AllGP
             return decayDateDateTime < today;
         }
 
-        private static float GetDateInSecondsFromEpochJulianDate(string epoch)
+        private static float GetDateInSecondsFromEpoch(string epoch)
         {
-            var epochDouble = double.Parse(epoch);
-            var epochDate = new DateTime(1950, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            epochDate = epochDate.AddDays(epochDouble);
-            return (float)epochDate.Subtract(new DateTime(1970, 1, 1)).TotalSeconds;
+            //format of epoch is ISO 8601 
+            //https://en.wikipedia.org/wiki/ISO_8601
+            //YYYY-MM-DDThh:mm:ss.ssssss
+            var epochSplit = epoch.Split('T');
+            var date = epochSplit[0];
+            var time = epochSplit[1];
+            var dateSplit = date.Split('-');
+            var timeSplit = time.Split(':');
+            var year = int.Parse(dateSplit[0]);
+            var month = int.Parse(dateSplit[1]);
+            var day = int.Parse(dateSplit[2]);
+            var hour = int.Parse(timeSplit[0]);
+            var minute = int.Parse(timeSplit[1]);
+            var second = int.Parse(timeSplit[2].Split('.')[0]);
+            var millisecond = int.Parse(timeSplit[2].Split('.')[1]);
+            var epochDateTime = new DateTime(year, month, day, hour, minute, second, millisecond);
+            var today = DateTime.Now;
+            var timeSpan = epochDateTime - today;
+            return (float)timeSpan.TotalSeconds;
+        }
+
+        private static float GetDateInSecondsFromLaunchDate(string launchDate)
+        {
+            //format of launchYear is "YYYY-MM-DD"
+            var launchDateSplit = launchDate.Split('-');
+            var launchYear = int.Parse(launchDateSplit[0]);
+            var launchMonth = int.Parse(launchDateSplit[1]);
+            var launchDay = int.Parse(launchDateSplit[2]);
+            var launchDateDateTime = new DateTime(launchYear, launchMonth, launchDay);
+            var today = DateTime.Now;
+            var timeSpan = launchDateDateTime - today;
+            return (float)timeSpan.TotalSeconds;
         }
 
 

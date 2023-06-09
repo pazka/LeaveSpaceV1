@@ -12,6 +12,7 @@ namespace Tools
         public int offsetY;
         public float scaleX;
         public float scaleY;
+        public float loopDuration;
         public bool isDev;
 
         public JsonConfiguration(
@@ -22,6 +23,7 @@ namespace Tools
             int offsetY,
             float scaleX,
             float scaleY,
+            float loopDuration,
             bool isDev
         )
         {
@@ -32,6 +34,7 @@ namespace Tools
             this.offsetY = offsetY;
             this.scaleX = scaleX;
             this.scaleY = scaleY;
+            this.loopDuration = loopDuration;
             this.isDev = isDev;
         }
     }

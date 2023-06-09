@@ -12,7 +12,7 @@ namespace DataProcessing.Generic
     public abstract class EventHatcher<T>
     {
         /// <summary>
-        ///  Trigger data that a ready to be triggered given a specific criteria
+        ///  Trigger data that a ready to be triggered given a specific criteria and dequeue it from the collection
         /// </summary> 
         /// <param name="sortedData"></param>
         /// <param name="criteria"></param>

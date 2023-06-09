@@ -8,7 +8,7 @@ namespace DataProcessing.AllGP
     public class AllGPDataConverter : DataConverter<AllGPData>
     {
         private IDataReader<AllGPData> _reader;
-        private List<ITimedData> _allDataRead;
+        private List<AllGPData> _allDataRead;
         private int _currentDataIndex = 0;
 
         private List<AllGPData> _allDataConverted;
@@ -23,7 +23,7 @@ namespace DataProcessing.AllGP
 
         public override void Clean()
         {
-            _allDataRead = new List<ITimedData>();
+            _allDataRead = new List<AllGPData>();
             _currentDataIndex = 0;
             _reader.Clean();
             BrowseAllDataBeforehand();
@@ -37,6 +37,8 @@ namespace DataProcessing.AllGP
                 RegisterBounds(data);
                 _reader.GoToNextData();
             }
+            
+            _allDataRead.Sort((a, b) => a.RawT.CompareTo(b.RawT));
         }
 
         public override AllGPData GetNextData()
