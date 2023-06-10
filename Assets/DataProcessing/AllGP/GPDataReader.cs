@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using DataProcessing.Generic;
+using JetBrains.Annotations;
 using Tools;
 using UnityEngine;
 
@@ -50,6 +51,15 @@ namespace DataProcessing.AllGP
         public string TLE_LINE0;
         public string TLE_LINE1;
         public string TLE_LINE2;
+        [CanBeNull] public AllGpJsonDataVisu DataVisu;
+    }
+
+    [Serializable]
+    public class AllGpJsonDataVisu
+    {
+        public float projected2DX;
+        public float projected2DY;
+        public float projected2DRadius;
     }
 
 
@@ -69,13 +79,12 @@ namespace DataProcessing.AllGP
         [Serializable]
         public class AllGPJson
         {
-            public AllGpJsonMetadata request_metadata;
             public List<AllGpJsonData> data;
         }
 
         List<AllGpJsonData> allRawData;
         private int currentIndex;
-        readonly string filePath = Application.dataPath + "/StreamingAssets/all_gp.json";
+        readonly string filePath = Application.dataPath + "/StreamingAssets/all_gp_data_visu.json";
 
         public void Init()
         {
@@ -88,7 +97,7 @@ namespace DataProcessing.AllGP
             if (allRawData.Count > 0) return;
 
             var fileContent = File.ReadAllText(filePath);
-            var json = JsonUtility.FromJson<AllGPJson>(fileContent);
+            var json = JsonUtility.FromJson<AllGPJson>("{\"data\":"+fileContent+"}");
             foreach (var raw in json.data)
             {
                 allRawData.Add(raw);
@@ -103,7 +112,7 @@ namespace DataProcessing.AllGP
 
         private bool DataIsToKeep(AllGpJsonData data)
         {
-            return IsDecayed(data.DECAY_DATE);
+            return IsDecayed(data.DECAY_DATE) && data.DataVisu != null;
         }
 
         public TimedData GetData()
@@ -125,8 +134,8 @@ namespace DataProcessing.AllGP
             if (potentialDate < 0)
                 potentialDate = GetDateInSecondsFromEpoch(currRawData.EPOCH);
 
-            var position = SpaceTools.GetXYFromAllGpJsonData(currRawData);
-            
+            var position = SpaceTools.GetXYFromAllGpJsonDataVisu(currRawData);
+
             var newData = new AllGPData(currRawData,
                 position.x,
                 position.y,
@@ -181,6 +190,7 @@ namespace DataProcessing.AllGP
             {
                 return -1;
             }
+
             //format of launchYear is "YYYY-MM-DD"
             var launchDateSplit = launchDate.Split('-');
             var launchYear = int.Parse(launchDateSplit[0]);

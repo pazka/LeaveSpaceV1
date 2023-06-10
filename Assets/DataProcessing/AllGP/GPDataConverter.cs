@@ -13,12 +13,12 @@ namespace DataProcessing.AllGP
         private int _currentDataIndex = 0;
 
         private List<TimedData> _allDataConverted;
-        private (TimedData Min, TimedData Max) _dataBounds;
-        private (float X, float Y) _screenBounds;
+        private (TimedData Min, TimedData Max, TimedData Mean) _dataBounds;
+        public (float X, float Y) ScreenBounds;
 
         public override void Init(int screenBoundX, int screenBoundY)
         {
-            _screenBounds = (screenBoundX, screenBoundY);
+            ScreenBounds = (screenBoundX, screenBoundY);
             _reader = FactoryDataReader.GetInstance(FactoryDataReader.AvailableDataReaderTypes.ALLGP);
             Clean();
         }
@@ -30,6 +30,7 @@ namespace DataProcessing.AllGP
             _currentDataIndex = 0;
             _dataBounds.Min = new TimedData("minbounds", float.MaxValue, float.MaxValue, float.MaxValue);
             _dataBounds.Max = new TimedData("maxbounds", float.MinValue, float.MinValue, float.MinValue);
+            _dataBounds.Mean = new TimedData("meantotalbounds", 0, 0, 0);
             _reader.Clean();
             _reader.Init();
             BrowseAllDataBeforehand();
@@ -44,6 +45,13 @@ namespace DataProcessing.AllGP
                 _reader.GoToNextData();
             }
 
+            _dataBounds.Mean = new TimedData(
+                "meanbounds",
+                _dataBounds.Mean.X / _allDataRead.Count,
+                _dataBounds.Mean.Y / _allDataRead.Count,
+                _dataBounds.Mean.T / _allDataRead.Count
+            );
+
             _allDataRead.Sort((a, b) => a.RawT.CompareTo(b.RawT));
         }
 
@@ -55,12 +63,28 @@ namespace DataProcessing.AllGP
             if (_allDataRead[_currentDataIndex++] is not AllGPData data)
                 throw new Exception("Data is not of type AllGPData");
 
-            var position = SpaceTools.GetXYFromAllGpJsonData(data.RawJson);
+            var position = SpaceTools.GetXYFromAllGpJsonDataVisu(data.RawJson);
 
             //scale the position from 0 to 1
-            data.SetX(ScaleTo1(position.x, _dataBounds.Min.X, _dataBounds.Max.X) * _screenBounds.X);
-            data.SetY(ScaleTo1(position.y, _dataBounds.Min.Y, _dataBounds.Max.Y) * _screenBounds.Y);
+            float tmpX = ScaleTo1(position.x, _dataBounds.Min.X, _dataBounds.Max.X);
+            float tmpY = ScaleTo1(position.y, _dataBounds.Min.Y, _dataBounds.Max.Y);
+            float scaledMeanX = ScaleTo1(_dataBounds.Mean.X, _dataBounds.Min.X, _dataBounds.Max.X);
+            float scaledMeanY = ScaleTo1(_dataBounds.Mean.Y, _dataBounds.Min.Y, _dataBounds.Max.Y);
+            float tmpDist = Mathf.Sqrt(tmpX * tmpX + tmpY * tmpY) / Mathf.Sqrt(2);
+            float avgDist = Mathf.Sqrt(scaledMeanX * scaledMeanX + scaledMeanY * scaledMeanY) / Mathf.Sqrt(2);
+
+            float range = 0.01f;
+            if (tmpDist < avgDist + range && tmpDist > avgDist - range)
+            {
+                float diff = (avgDist - tmpDist) / range;
+                tmpX += (diff * 0.4f);
+                tmpY += (diff * 0.4f);
+            }
+
+            data.SetX(tmpX * ScreenBounds.X);
+            data.SetY(tmpY * ScreenBounds.Y);
             data.SetT(ScaleTo1(data.RawT, _dataBounds.Min.T, _dataBounds.Max.T));
+
 
             return data;
         }
@@ -107,12 +131,16 @@ namespace DataProcessing.AllGP
             {
                 _dataBounds.Max.SetT(data.RawT);
             }
+
+            _dataBounds.Mean.SetX((_dataBounds.Mean.X + data.RawX));
+            _dataBounds.Mean.SetY((_dataBounds.Mean.Y + data.RawY));
+            _dataBounds.Mean.SetT((_dataBounds.Mean.T + data.RawT));
         }
 
 
         public override (TimedData Min, TimedData Max) GetDataBounds()
         {
-            return _dataBounds;
+            return (_dataBounds.Min, _dataBounds.Max);
         }
 
         public override IDataReader GetDataReader()

@@ -21,5 +21,11 @@ namespace Tools
 
             return (x * eccentricity, y * eccentricity);
         }
+        public static (float x, float y) GetXYFromAllGpJsonDataVisu(AllGpJsonData data)
+        {
+            if(data.DataVisu == null)
+                return (0, 0);
+            return (data.DataVisu.projected2DX, data.DataVisu.projected2DY);
+        }
     }
 }

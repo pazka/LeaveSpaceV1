@@ -71,5 +71,5 @@ const data_visu = all_data.map(elset => {
 console.log(data_visu[0]);
 console.log("gone through ", i, " elems");
 console.log("unprocessed : ", unprocessable_elset);
-const data_visu_json = JSON.stringify(data_visu);
-fs_1.default.writeFileSync("all_gp_data_visu.json", data_visu_json, "utf-8");
+fs_1.default.writeFileSync("all_gp_data_visu.json", JSON.stringify(data_visu), "utf-8");
+fs_1.default.writeFileSync("all_gp_data_visu.pretty.json", JSON.stringify(data_visu, null, 4), "utf-8");

@@ -44,7 +44,7 @@ public class MainScript : MonoBehaviour
             _allGpDataConverted.Add(gpData);
             var dataVisual = new DataVisual(gpData, visualPool.GetOne());
             dataVisual.Visual.SetActive(false);
-            dataVisual.Visual.transform.position = new Vector3(gpData.X , gpData.Y , 0);
+            dataVisual.Visual.transform.position = new Vector3(gpData.X, gpData.Y, 0);
             _notYetHatchedDataVisuals.Enqueue(dataVisual);
         }
     }
@@ -54,9 +54,8 @@ public class MainScript : MonoBehaviour
     {
         if (_eventHatcher == null)
             return;
-        
-        float timePassed = Time.time / LoopDuration;
-        var hatched = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, timePassed);
+
+        var hatched = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, Time.time / LoopDuration);
         foreach (var dataVisual in hatched)
         {
             _hatchedDataVisuals.Enqueue(dataVisual);
@@ -64,12 +63,17 @@ public class MainScript : MonoBehaviour
 
         foreach (var dataVisual in _hatchedDataVisuals)
         {
-            var data = dataVisual.Data;
-            float circleSize = float.Parse(dataVisual.Data.RawJson.PERIAPSIS);
-            //transform the orignal x,y position of gameobject to go around in a circle given the time and the circleSize parmeter
-            float x = Mathf.Cos(timePassed * 2 * Mathf.PI) * circleSize;
-            float y = Mathf.Sin(timePassed * 2 * Mathf.PI) * circleSize;
-            dataVisual.Visual.transform.position = new Vector3(x, y, 0);
+            float originalX = dataVisual.Data.X;
+            float originalY = dataVisual.Data.Y;
+            float circleSize = (float)Math.Sqrt(originalX * originalX + originalY * originalY) / (float)Math.Sqrt(2);
+            float timeStart = 1 - (0.2f + dataVisual.Data.T * 0.8f);
+            float timePosition = dataVisual.Data.T*1000 + timeStart * Time.time / 100;
+
+            //Make the object go around in a circle 
+            dataVisual.Visual.transform.position = new Vector3(
+                (float)Math.Cos(timePosition * Math.PI) * circleSize,
+                (float)Math.Sin(timePosition * Math.PI) * circleSize,
+                0);
         }
     }
 }
