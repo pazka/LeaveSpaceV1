@@ -1,6 +1,5 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using DataProcessing.AllGP;
 using DataProcessing.Generic;
 using UnityEngine;
@@ -20,6 +19,7 @@ public class MainScript : MonoBehaviour
     public void Start()
     {
         visualPool.PreloadNObjects(30000);
+        _eventHatcher = new AllGpDataEventHatcher();
         _hatchedDataVisuals = new Queue<DataVisual>();
         _notYetHatchedDataVisuals = new Queue<DataVisual>();
         _allGpDataConverted = new List<AllGPData>();
@@ -28,16 +28,18 @@ public class MainScript : MonoBehaviour
             FactoryDataConverter.GetInstance(FactoryDataConverter.AvailableDataManagerTypes
                 .ALLGP) as AllGPDataConverter;
         if (_converter == null)
-            throw new System.Exception("Converter is null");
+            throw new Exception("Converter is null");
 
         _converter.Init(1920, 1080);
+        FillVisualPool();
+    }
 
-        _eventHatcher = new AllGpDataEventHatcher();
-
+    private void FillVisualPool()
+    {
         while (_converter.GetNextData() is { } data)
         {
             if (data is not AllGPData gpData)
-                throw new System.Exception("Data is not of type AllGPData");
+                throw new Exception("Data is not of type AllGPData");
 
             _allGpDataConverted.Add(gpData);
             var dataVisual = new DataVisual(gpData, visualPool.GetOne());
@@ -50,6 +52,9 @@ public class MainScript : MonoBehaviour
     // Update is called once per frame
     public void Update()
     {
+        if (_eventHatcher == null)
+            return;
+        
         float timePassed = Time.time / LoopDuration;
         var hatched = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, timePassed);
         foreach (var dataVisual in hatched)

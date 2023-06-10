@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using DataProcessing.Generic;
+using Tools;
 using UnityEngine;
 
 namespace DataProcessing.AllGP
@@ -17,16 +18,20 @@ namespace DataProcessing.AllGP
 
         public override void Init(int screenBoundX, int screenBoundY)
         {
+            _screenBounds = (screenBoundX, screenBoundY);
             _reader = FactoryDataReader.GetInstance(FactoryDataReader.AvailableDataReaderTypes.ALLGP);
-            _reader.Init();
-            BrowseAllDataBeforehand();
+            Clean();
         }
 
         public override void Clean()
         {
+            _allDataConverted = new List<TimedData>();
             _allDataRead = new List<TimedData>();
             _currentDataIndex = 0;
+            _dataBounds.Min = new TimedData("minbounds", float.MaxValue, float.MaxValue, float.MaxValue);
+            _dataBounds.Max = new TimedData("maxbounds", float.MinValue, float.MinValue, float.MinValue);
             _reader.Clean();
+            _reader.Init();
             BrowseAllDataBeforehand();
         }
 
@@ -38,7 +43,7 @@ namespace DataProcessing.AllGP
                 RegisterBounds(data);
                 _reader.GoToNextData();
             }
-            
+
             _allDataRead.Sort((a, b) => a.RawT.CompareTo(b.RawT));
         }
 
@@ -50,14 +55,19 @@ namespace DataProcessing.AllGP
             if (_allDataRead[_currentDataIndex++] is not AllGPData data)
                 throw new Exception("Data is not of type AllGPData");
 
-            var position = GetXYFromAllGpJsonData(data.RawJson);
+            var position = SpaceTools.GetXYFromAllGpJsonData(data.RawJson);
 
             //scale the position from 0 to 1
-            data.SetX(position.x / _dataBounds.Max.X * _screenBounds.X);
-            data.SetY(position.y / _dataBounds.Max.Y * _screenBounds.Y);
-            data.SetT(data.RawT / _dataBounds.Max.T);
+            data.SetX(ScaleTo1(position.x, _dataBounds.Min.X, _dataBounds.Max.X) * _screenBounds.X);
+            data.SetY(ScaleTo1(position.y, _dataBounds.Min.Y, _dataBounds.Max.Y) * _screenBounds.Y);
+            data.SetT(ScaleTo1(data.RawT, _dataBounds.Min.T, _dataBounds.Max.T));
 
             return data;
+        }
+
+        private static float ScaleTo1(float value, float min, float max)
+        {
+            return (value - min) / (max - min);
         }
 
         public override IEnumerable<TimedData> GetAllData()
@@ -68,10 +78,6 @@ namespace DataProcessing.AllGP
 
         private void RegisterBounds(TimedData data)
         {
-            _dataBounds.Min ??= data;
-
-            _dataBounds.Max ??= data;
-
             if (_dataBounds.Min.X > data.RawX)
             {
                 _dataBounds.Min.SetX(data.RawX);
@@ -103,22 +109,6 @@ namespace DataProcessing.AllGP
             }
         }
 
-        private static (float x, float y) GetXYFromAllGpJsonData(AllGpJsonData data)
-        {
-            var meanMotion = float.Parse(data.MEAN_MOTION);
-            var eccentricity = float.Parse(data.ECCENTRICITY);
-            var inclination = float.Parse(data.INCLINATION);
-            var raOfAscNode = float.Parse(data.RA_OF_ASC_NODE);
-            var argOfPericenter = float.Parse(data.ARG_OF_PERICENTER);
-            var meanAnomaly = float.Parse(data.MEAN_ANOMALY);
-            var semiMajorAxis = float.Parse(data.SEMIMAJOR_AXIS);
-            var periapsis = float.Parse(data.PERIAPSIS);
-
-            var x = (int)(semiMajorAxis * Mathf.Cos(meanAnomaly));
-            var y = (int)(semiMajorAxis * Mathf.Sin(meanAnomaly));
-
-            return (x * eccentricity, y * eccentricity);
-        }
 
         public override (TimedData Min, TimedData Max) GetDataBounds()
         {

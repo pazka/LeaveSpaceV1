@@ -2,21 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using DataProcessing.Generic;
+using Tools;
 using UnityEngine;
 
 namespace DataProcessing.AllGP
 {
-    abstract class AllGpJsonMetadata
-    {
-        public int Total;
-        public int Limit;
-        public int LimitOffset;
-        public int ReturnedRows;
-        public string RequestTime;
-        public string DataSize;
-    }
-
-    public abstract class AllGpJsonData
+    [Serializable]
+    public class AllGpJsonData
     {
         public string CCSDS_OMM_VERS;
         public string COMMENT;
@@ -60,33 +52,41 @@ namespace DataProcessing.AllGP
         public string TLE_LINE2;
     }
 
-    class AllGPJson
-    {
-        public AllGpJsonMetadata request_metadata;
-        public List<AllGpJsonData> data;
-    }
 
     public class AllGPDataReader : DataProcessing.Generic.IDataReader
     {
+        [Serializable]
+        public class AllGpJsonMetadata
+        {
+            public int Total;
+            public int Limit;
+            public int LimitOffset;
+            public int ReturnedRows;
+            public string RequestTime;
+            public string DataSize;
+        }
+
+        [Serializable]
+        public class AllGPJson
+        {
+            public AllGpJsonMetadata request_metadata;
+            public List<AllGpJsonData> data;
+        }
+
         List<AllGpJsonData> allRawData;
         private int currentIndex;
         readonly string filePath = Application.dataPath + "/StreamingAssets/all_gp.json";
-        
-        public AllGPDataReader()
-        {
-            Init();
-        }
 
         public void Init()
         {
-            allRawData = new List<AllGpJsonData>();
-            currentIndex = 0;
+            Clean();
             ReadFile();
         }
 
         private void ReadFile()
         {
             if (allRawData.Count > 0) return;
+
             var fileContent = File.ReadAllText(filePath);
             var json = JsonUtility.FromJson<AllGPJson>(fileContent);
             foreach (var raw in json.data)
@@ -99,7 +99,6 @@ namespace DataProcessing.AllGP
         {
             allRawData = new List<AllGpJsonData>();
             currentIndex = 0;
-            ReadFile();
         }
 
         private bool DataIsToKeep(AllGpJsonData data)
@@ -122,13 +121,15 @@ namespace DataProcessing.AllGP
                 currRawData = allRawData[currentIndex];
             }
 
-            float potentialDate = GetDateInSecondsFromEpoch(currRawData.EPOCH);
-            if (!string.IsNullOrEmpty(currRawData.LAUNCH_DATE))
-                potentialDate = GetDateInSecondsFromLaunchDate(currRawData.LAUNCH_DATE);
+            float potentialDate = GetDateInSecondsFromLaunchDate(currRawData.LAUNCH_DATE);
+            if (potentialDate < 0)
+                potentialDate = GetDateInSecondsFromEpoch(currRawData.EPOCH);
 
+            var position = SpaceTools.GetXYFromAllGpJsonData(currRawData);
+            
             var newData = new AllGPData(currRawData,
-                -1,
-                -1,
+                position.x,
+                position.y,
                 potentialDate
             );
 
@@ -168,14 +169,18 @@ namespace DataProcessing.AllGP
             var minute = int.Parse(timeSplit[1]);
             var second = int.Parse(timeSplit[2].Split('.')[0]);
             var millisecond = int.Parse(timeSplit[2].Split('.')[1]);
-            var epochDateTime = new DateTime(year, month, day, hour, minute, second, millisecond);
+            var epochDateTime = new DateTime(year, month, day, hour, minute, second, millisecond % 999);
             var today = DateTime.Now;
-            var timeSpan = epochDateTime - today;
+            var timeSpan = today - epochDateTime;
             return (float)timeSpan.TotalSeconds;
         }
 
         private static float GetDateInSecondsFromLaunchDate(string launchDate)
         {
+            if (string.IsNullOrEmpty(launchDate))
+            {
+                return -1;
+            }
             //format of launchYear is "YYYY-MM-DD"
             var launchDateSplit = launchDate.Split('-');
             var launchYear = int.Parse(launchDateSplit[0]);
@@ -183,7 +188,7 @@ namespace DataProcessing.AllGP
             var launchDay = int.Parse(launchDateSplit[2]);
             var launchDateDateTime = new DateTime(launchYear, launchMonth, launchDay);
             var today = DateTime.Now;
-            var timeSpan = launchDateDateTime - today;
+            var timeSpan = today - launchDateDateTime;
             return (float)timeSpan.TotalSeconds;
         }
 

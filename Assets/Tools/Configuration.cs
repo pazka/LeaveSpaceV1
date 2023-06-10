@@ -41,7 +41,7 @@ namespace Tools
 
     public static class Configuration
     {
-        private static readonly string ConfigPath = Application.dataPath + "/StreamingAssets/DataVisuConfig.json";
+        private static readonly string ConfigPath = Application.dataPath + "/StreamingAssets/config.json";
         public static string ConfigContent;
 
         public static JsonConfiguration GetConfig()
