@@ -17,13 +17,13 @@ namespace DataProcessing.Generic
     /// 
     /// </summary>
 
-    public interface IDataConverter<T> where T : ITimedData
+    public interface IDataConverter
     {
         void Init(int screenBoundX, int screenBoundY);
         void Clean();
-        T GetNextData();
-        IEnumerable<T> GetAllData();
-        (T Min,T Max) GetDataBounds();
-        IDataReader<T> GetDataReader();
+        TimedData GetNextData();
+        IEnumerable<TimedData> GetAllData();
+        (TimedData Min,TimedData Max) GetDataBounds();
+        IDataReader GetDataReader();
     }
 }

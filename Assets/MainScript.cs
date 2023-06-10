@@ -15,34 +15,40 @@ public class MainScript : MonoBehaviour
     private EventHatcher<DataVisual> _eventHatcher;
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
-    float LoopDuration = 300;
+    public float LoopDuration = 300;
 
-    void Start()
+    public void Start()
     {
         visualPool.PreloadNObjects(30000);
+        _hatchedDataVisuals = new Queue<DataVisual>();
+        _notYetHatchedDataVisuals = new Queue<DataVisual>();
+        _allGpDataConverted = new List<AllGPData>();
 
         _converter =
             FactoryDataConverter.GetInstance(FactoryDataConverter.AvailableDataManagerTypes
                 .ALLGP) as AllGPDataConverter;
         if (_converter == null)
             throw new System.Exception("Converter is null");
-        
+
         _converter.Init(1920, 1080);
-        
+
         _eventHatcher = new AllGpDataEventHatcher();
 
-        _allGpDataConverted = new List<AllGPData>();
         while (_converter.GetNextData() is { } data)
         {
-            _allGpDataConverted.Add(data);
-            var dataVisual = new DataVisual(data, visualPool.GetOne());
+            if (data is not AllGPData gpData)
+                throw new System.Exception("Data is not of type AllGPData");
+
+            _allGpDataConverted.Add(gpData);
+            var dataVisual = new DataVisual(gpData, visualPool.GetOne());
             dataVisual.Visual.SetActive(false);
+            dataVisual.Visual.transform.position = new Vector3(gpData.X , gpData.Y , 0);
             _notYetHatchedDataVisuals.Enqueue(dataVisual);
         }
     }
 
     // Update is called once per frame
-    void Update()
+    public void Update()
     {
         float timePassed = Time.time / LoopDuration;
         var hatched = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, timePassed);
@@ -50,16 +56,15 @@ public class MainScript : MonoBehaviour
         {
             _hatchedDataVisuals.Enqueue(dataVisual);
         }
-        
+
         foreach (var dataVisual in _hatchedDataVisuals)
         {
-            var data = dataVisual.Data as AllGPData;
+            var data = dataVisual.Data;
             float circleSize = float.Parse(dataVisual.Data.RawJson.PERIAPSIS);
             //transform the orignal x,y position of gameobject to go around in a circle given the time and the circleSize parmeter
             float x = Mathf.Cos(timePassed * 2 * Mathf.PI) * circleSize;
             float y = Mathf.Sin(timePassed * 2 * Mathf.PI) * circleSize;
             dataVisual.Visual.transform.position = new Vector3(x, y, 0);
         }
-        
     }
 }

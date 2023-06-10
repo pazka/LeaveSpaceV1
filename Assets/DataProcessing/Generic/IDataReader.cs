@@ -9,7 +9,7 @@
     /// 
     /// The goal is to have a Data reader generic enough to be able to read Streams or Fixed Data.
     /// </summary>
-    public interface IDataReader<T> where T : IData
+    public interface IDataReader
     {
         /// <summary>
         /// Create the runtime variable used later by the entity
@@ -28,7 +28,7 @@
         /// <summary>
         /// Get Data at the current cursor
         /// </summary>
-        T GetData();
+        TimedData GetData();
 
         /// <summary>
         /// Move the cursor

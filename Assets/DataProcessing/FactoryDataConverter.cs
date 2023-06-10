@@ -10,16 +10,16 @@ public static class FactoryDataConverter
         ALLGP
     }
 
-    private static readonly Dictionary<AvailableDataManagerTypes, IDataConverter<ITimedData>> instances =
-        new Dictionary<AvailableDataManagerTypes, IDataConverter<ITimedData>>();
+    private static readonly Dictionary<AvailableDataManagerTypes, IDataConverter> instances =
+        new Dictionary<AvailableDataManagerTypes, IDataConverter>();
 
-    public static IDataConverter<ITimedData> GetInstance(AvailableDataManagerTypes dataManagerType)
+    public static IDataConverter GetInstance(AvailableDataManagerTypes dataManagerType)
     {
         switch (dataManagerType)
         {
             case AvailableDataManagerTypes.ALLGP:
                 if (!instances.ContainsKey(dataManagerType))
-                    instances.Add(dataManagerType, new AllGPDataConverter() as IDataConverter<ITimedData>);
+                    instances.Add(dataManagerType, new AllGPDataConverter());
 
                 return instances[dataManagerType];
 

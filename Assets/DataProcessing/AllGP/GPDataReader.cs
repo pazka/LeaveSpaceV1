@@ -66,16 +66,22 @@ namespace DataProcessing.AllGP
         public List<AllGpJsonData> data;
     }
 
-    public class AllGPDataReader : IDataReader<AllGPData>
+    public class AllGPDataReader : DataProcessing.Generic.IDataReader
     {
         List<AllGpJsonData> allRawData;
         private int currentIndex;
         readonly string filePath = Application.dataPath + "/StreamingAssets/all_gp.json";
+        
+        public AllGPDataReader()
+        {
+            Init();
+        }
 
         public void Init()
         {
             allRawData = new List<AllGpJsonData>();
             currentIndex = 0;
+            ReadFile();
         }
 
         private void ReadFile()
@@ -93,6 +99,7 @@ namespace DataProcessing.AllGP
         {
             allRawData = new List<AllGpJsonData>();
             currentIndex = 0;
+            ReadFile();
         }
 
         private bool DataIsToKeep(AllGpJsonData data)
@@ -100,7 +107,7 @@ namespace DataProcessing.AllGP
             return IsDecayed(data.DECAY_DATE);
         }
 
-        public AllGPData GetData()
+        public TimedData GetData()
         {
             if (allRawData.Count == 0) ReadFile();
 

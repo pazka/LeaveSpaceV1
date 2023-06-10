@@ -5,25 +5,26 @@ using UnityEngine;
 
 namespace DataProcessing.AllGP
 {
-    public class AllGPDataConverter : DataConverter<AllGPData>
+    public class AllGPDataConverter : DataConverter
     {
-        private IDataReader<AllGPData> _reader;
-        private List<AllGPData> _allDataRead;
+        private IDataReader _reader;
+        private List<TimedData> _allDataRead;
         private int _currentDataIndex = 0;
 
-        private List<AllGPData> _allDataConverted;
-        private (AllGPData Min, AllGPData Max) _dataBounds;
+        private List<TimedData> _allDataConverted;
+        private (TimedData Min, TimedData Max) _dataBounds;
+        private (float X, float Y) _screenBounds;
 
         public override void Init(int screenBoundX, int screenBoundY)
         {
-            _reader = FactoryDataReader.GetInstance(FactoryDataReader.AvailableDataReaderTypes.ALLGP) as
-                IDataReader<AllGPData>;
+            _reader = FactoryDataReader.GetInstance(FactoryDataReader.AvailableDataReaderTypes.ALLGP);
+            _reader.Init();
             BrowseAllDataBeforehand();
         }
 
         public override void Clean()
         {
-            _allDataRead = new List<AllGPData>();
+            _allDataRead = new List<TimedData>();
             _currentDataIndex = 0;
             _reader.Clean();
             BrowseAllDataBeforehand();
@@ -41,31 +42,31 @@ namespace DataProcessing.AllGP
             _allDataRead.Sort((a, b) => a.RawT.CompareTo(b.RawT));
         }
 
-        public override AllGPData GetNextData()
+        public override TimedData GetNextData()
         {
             if (_currentDataIndex >= _allDataRead.Count)
                 return null;
 
             if (_allDataRead[_currentDataIndex++] is not AllGPData data)
-                return null;
+                throw new Exception("Data is not of type AllGPData");
 
             var position = GetXYFromAllGpJsonData(data.RawJson);
 
             //scale the position from 0 to 1
-            data.SetX(position.x / _dataBounds.Max.X);
-            data.SetY(position.y / _dataBounds.Max.Y);
+            data.SetX(position.x / _dataBounds.Max.X * _screenBounds.X);
+            data.SetY(position.y / _dataBounds.Max.Y * _screenBounds.Y);
             data.SetT(data.RawT / _dataBounds.Max.T);
 
             return data;
         }
 
-        public override IEnumerable<AllGPData> GetAllData()
+        public override IEnumerable<TimedData> GetAllData()
         {
             while (GetNextData() is { } data)
                 yield return data;
         }
 
-        private void RegisterBounds(AllGPData data)
+        private void RegisterBounds(TimedData data)
         {
             _dataBounds.Min ??= data;
 
@@ -119,12 +120,12 @@ namespace DataProcessing.AllGP
             return (x * eccentricity, y * eccentricity);
         }
 
-        public override (AllGPData Min, AllGPData Max) GetDataBounds()
+        public override (TimedData Min, TimedData Max) GetDataBounds()
         {
             return _dataBounds;
         }
 
-        public override IDataReader<AllGPData> GetDataReader()
+        public override IDataReader GetDataReader()
         {
             return _reader;
         }
