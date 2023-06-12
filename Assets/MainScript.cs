@@ -67,7 +67,7 @@ public class MainScript : MonoBehaviour
             float originalY = dataVisual.Data.Y;
             float circleSize = (float)Math.Sqrt(originalX * originalX + originalY * originalY) / (float)Math.Sqrt(2);
             float timeStart = 1 - (0.2f + dataVisual.Data.T * 0.8f);
-            float timePosition = dataVisual.Data.T*1000 + timeStart * Time.time / 100;
+            float timePosition = dataVisual.Data.T * 1000 + timeStart * Time.time / 100;
 
             //Make the object go around in a circle 
             dataVisual.Visual.transform.position = new Vector3(

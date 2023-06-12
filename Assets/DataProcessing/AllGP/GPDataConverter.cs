@@ -73,7 +73,7 @@ namespace DataProcessing.AllGP
             float tmpDist = Mathf.Sqrt(tmpX * tmpX + tmpY * tmpY) / Mathf.Sqrt(2);
             float avgDist = Mathf.Sqrt(scaledMeanX * scaledMeanX + scaledMeanY * scaledMeanY) / Mathf.Sqrt(2);
 
-            float range = 0.01f;
+            float range = 0.005f;
             if (tmpDist < avgDist + range && tmpDist > avgDist - range)
             {
                 float diff = (avgDist - tmpDist) / range;
