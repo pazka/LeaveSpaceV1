@@ -20,7 +20,7 @@ namespace Visuals
             int num = rnd.Next();
             if(num % 10 == 0)
             {
-                dataToTrigger.Visual.GetComponent<Renderer>().material.color = Color.red;
+                dataToTrigger.Visual.GetComponent<Renderer>().material.SetColor("_Color",Color.red);
             }
             
             return dataToTrigger;
