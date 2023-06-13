@@ -32,6 +32,7 @@ namespace Visuals
             
             if (dataToTrigger.Data.RawJson.OBJECT_NAME.Contains("STARLINK"))
             {
+                dataToTrigger.Type = "accent";
                 dataToTrigger.Visual = accentVisualPool.GetOne();
                 dataToTrigger.Visual.GetComponent<Renderer>().material.SetColor("_Color",accentColor);
             }

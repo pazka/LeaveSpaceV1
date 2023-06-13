@@ -7,6 +7,7 @@ public class DataVisual
 {
     public AllGPData Data;
     public GameObject Visual;
+    public string Type="basic";
 
     public DataVisual(AllGPData data, GameObject visual)
     {
