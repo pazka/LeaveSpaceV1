@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SatMat
-  m_Shader: {fileID: 4800000, guid: e2ebac0d4ca7a254b9585685548d4b58, type: 3}
+  m_Name: SatMatAccent
+  m_Shader: {fileID: 4800000, guid: be3575ded60854c4f86ac05c591e6d63, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

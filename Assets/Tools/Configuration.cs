@@ -14,6 +14,8 @@ namespace Tools
         public float scaleY;
         public float loopDuration;
         public bool isDev;
+        public float[] baseColor;
+        public float[] accentColor;
 
         public JsonConfiguration(
             int outPort,
@@ -24,7 +26,9 @@ namespace Tools
             float scaleX,
             float scaleY,
             float loopDuration,
-            bool isDev
+            bool isDev,
+            float[] baseColor,
+            float[] accentColor
         )
         {
             this.outPort = outPort;
@@ -36,6 +40,8 @@ namespace Tools
             this.scaleY = scaleY;
             this.loopDuration = loopDuration;
             this.isDev = isDev;
+            this.baseColor = baseColor;
+            this.accentColor = accentColor;
         }
     }
 
@@ -47,7 +53,7 @@ namespace Tools
         public static JsonConfiguration GetConfig()
         {
             //create config file if not exist
-            
+
             if (ConfigContent == null) ConfigContent = File.ReadAllText(ConfigPath);
             var config = JsonUtility.FromJson<JsonConfiguration>(ConfigContent);
 

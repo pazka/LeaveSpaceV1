@@ -1,25 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using DataProcessing.AllGP;
 using DataProcessing.Generic;
+using Tools;
 using UnityEngine;
 using Visuals;
 
 public class MainScript : MonoBehaviour
 {
     public VisualPool visualPool;
+    public VisualPool accentVisualPool;
 
     private AllGPDataConverter _converter;
     private List<AllGPData> _allGpDataConverted;
     private EventHatcher<DataVisual> _eventHatcher;
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
-    public float LoopDuration = 300;
+    public float LoopDuration = 1000;
 
     public void Start()
     {
-        visualPool.PreloadNObjects(30000);
-        _eventHatcher = new AllGpDataEventHatcher();
+        SetValueFromConfig();
+        _eventHatcher = new AllGpDataEventHatcher(visualPool,accentVisualPool);
         _hatchedDataVisuals = new Queue<DataVisual>();
         _notYetHatchedDataVisuals = new Queue<DataVisual>();
         _allGpDataConverted = new List<AllGPData>();
@@ -34,6 +37,11 @@ public class MainScript : MonoBehaviour
         FillVisualPool();
     }
 
+    private void SetValueFromConfig()
+    {
+        LoopDuration = Configuration.GetConfig().loopDuration;
+    }
+
     private void FillVisualPool()
     {
         while (_converter.GetNextData() is { } data)
@@ -42,9 +50,7 @@ public class MainScript : MonoBehaviour
                 throw new Exception("Data is not of type AllGPData");
 
             _allGpDataConverted.Add(gpData);
-            var dataVisual = new DataVisual(gpData, visualPool.GetOne());
-            dataVisual.Visual.SetActive(false);
-            dataVisual.Visual.transform.position = new Vector3(gpData.X, gpData.Y, 0);
+            var dataVisual = new DataVisual(gpData,null);
             _notYetHatchedDataVisuals.Enqueue(dataVisual);
         }
     }
@@ -52,6 +58,12 @@ public class MainScript : MonoBehaviour
     // Update is called once per frame
     public void Update()
     {
+        //check if key is pressed
+        if (Input.GetKeyDown(KeyBindings.Quit))
+        {
+            Application.Quit();
+        }
+        
         if (_eventHatcher == null)
             return;
 

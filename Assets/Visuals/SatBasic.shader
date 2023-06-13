@@ -1,4 +1,4 @@
-Shader "Custom/GradientCircleShader"
+Shader "Custom/SatBasic"
 {
     Properties
     {
@@ -6,13 +6,10 @@ Shader "Custom/GradientCircleShader"
         _Radius ("Radius", Range(0, 1)) = 0.5
         _Color ("Color", Color) = (1, 1, 1, 1)
     }
-
+    
     SubShader
     {
-        Tags
-        {
-            "RenderType"="Transparent" "Queue"="Transparent"
-        }
+        Tags { "RenderType"="Transparent" "Queue"="Transparent" }
         LOD 100
 
         Blend SrcAlpha OneMinusSrcAlpha
@@ -56,10 +53,10 @@ Shader "Custom/GradientCircleShader"
                 float2 uv = i.uv * 0.5 + 0.25;
                 float2 center = _Center.xy;
                 float radius = _Radius;
-                float dist = distance(uv, center) / 0.5;
+                float dist = distance(uv, center)/0.5;
 
                 // Calculate the alpha value based on the distance and radius
-                float alpha = 1 - smoothstep(0, radius, dist);
+                float alpha = 1-smoothstep(0, radius, dist);
 
                 // Set the final color based on the alpha and provided color
                 fixed4 color = _Color;
