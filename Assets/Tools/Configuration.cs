@@ -15,6 +15,7 @@ namespace Tools
         public float loopDuration;
         public float delayAfterFullLoop;
         public float speedCoef;
+        public float baseSpeed;
         public bool isDev;
         public float[] baseColor;
         public float[] accentColor;
@@ -30,6 +31,7 @@ namespace Tools
             float loopDuration,
             float delayAfterFullLoop,
             float speedCoef,
+            float baseSpeed,
             bool isDev,
             float[] baseColor,
             float[] accentColor
@@ -46,6 +48,7 @@ namespace Tools
             this.delayAfterFullLoop = delayAfterFullLoop;
             this.isDev = isDev;
             this.speedCoef = speedCoef;
+            this.baseSpeed = baseSpeed;
             this.baseColor = baseColor;
             this.accentColor = accentColor;
         }

@@ -21,8 +21,9 @@ public class MainScript : MonoBehaviour
     public VisualPool accentVisualPool;
     public float loopDuration = 30;
     public float delayAfterFullLoop = 30;
-    public float disappearingRate = 0.8f;
+    public float disappearingRate = 0.08f;
     public float speedCoef = 1;
+    public float baseSpeed = 0.002f;
     private float _lastLoopStart = 0;
 
     private AllGPDataConverter _converter;
@@ -60,6 +61,7 @@ public class MainScript : MonoBehaviour
         loopDuration = Configuration.GetConfig().loopDuration;
         delayAfterFullLoop = Configuration.GetConfig().delayAfterFullLoop;
         speedCoef = Configuration.GetConfig().speedCoef;
+        baseSpeed = Configuration.GetConfig().baseSpeed;
     }
 
     private void FillVisualPool()
@@ -143,9 +145,9 @@ public class MainScript : MonoBehaviour
             float originalX = dataVisual.Data.X;
             float originalY = dataVisual.Data.Y;
             float circleSize = (float)Math.Sqrt(originalX * originalX + originalY * originalY) / (float)Math.Sqrt(2);
-            float timeOffset = 1 - (0.2f + dataVisual.Data.T * 0.8f) * 1000;
-            float timeSpeed = 0.003f + speedCoef/200 * dataVisual.Data.T;
-            float timePosition = (timeElapsed ) * timeSpeed;
+            float timeOffset = 1 - (0.2f + dataVisual.Data.T * 0.8f) * 10000;
+            float timeSpeed = baseSpeed + (speedCoef / 300) * dataVisual.Data.T;
+            float timePosition = (timeElapsed) * timeSpeed;
 
             float x = (float)Math.Cos(timePosition * 2 * Math.PI + timeOffset) * circleSize;
             float y = (float)Math.Sin(timePosition * 2 * Math.PI + timeOffset) * circleSize;
