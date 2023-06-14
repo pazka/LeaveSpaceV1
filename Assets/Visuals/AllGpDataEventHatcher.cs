@@ -30,7 +30,7 @@ namespace Visuals
         protected override DataVisual ExecuteData(DataVisual dataToTrigger)
         {
             
-            if (dataToTrigger.Data.RawJson.OBJECT_NAME.Contains("STARLINK"))
+            if (dataToTrigger.Data.RawJson.OBJECT_NAME.Contains("STARLINK") || dataToTrigger.Data.RawJson.OBJECT_NAME.Contains("ONEWEB"))
             {
                 dataToTrigger.Type = "accent";
                 dataToTrigger.Visual = accentVisualPool.GetOne();

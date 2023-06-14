@@ -52,7 +52,7 @@ namespace DataProcessing.AllGP
                 _dataBounds.Mean.T / _allDataRead.Count
             );
 
-            _allDataRead.Sort((a, b) => a.RawT.CompareTo(b.RawT));
+            _allDataRead.Sort((a, b) => -a.RawT.CompareTo(b.RawT));
         }
 
         public override TimedData GetNextData()
@@ -83,7 +83,7 @@ namespace DataProcessing.AllGP
 
             data.SetX(tmpX * ScreenBounds.X);
             data.SetY(tmpY * ScreenBounds.Y);
-            data.SetT(ScaleTo1(data.RawT, _dataBounds.Min.T, _dataBounds.Max.T));
+            data.SetT(1-ScaleTo1(data.RawT, _dataBounds.Min.T, _dataBounds.Max.T));
 
 
             return data;

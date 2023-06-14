@@ -13,6 +13,7 @@ namespace Tools
         public float scaleX;
         public float scaleY;
         public float loopDuration;
+        public float delayAfterFullLoop;
         public bool isDev;
         public float[] baseColor;
         public float[] accentColor;
@@ -26,6 +27,7 @@ namespace Tools
             float scaleX,
             float scaleY,
             float loopDuration,
+            float delayAfterFullLoop,
             bool isDev,
             float[] baseColor,
             float[] accentColor
@@ -39,6 +41,7 @@ namespace Tools
             this.scaleX = scaleX;
             this.scaleY = scaleY;
             this.loopDuration = loopDuration;
+            this.delayAfterFullLoop = delayAfterFullLoop;
             this.isDev = isDev;
             this.baseColor = baseColor;
             this.accentColor = accentColor;

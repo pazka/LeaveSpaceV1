@@ -6,6 +6,7 @@ using DataProcessing.Generic;
 using Tools;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Visuals;
 
 public enum AppStates
@@ -18,9 +19,9 @@ public class MainScript : MonoBehaviour
 {
     public VisualPool visualPool;
     public VisualPool accentVisualPool;
-    public float LoopDuration = 1000;
-    public int delayAfterFullLoop = 60;
-    public float disappearingRate = 0.2f;
+    public float loopDuration = 30;
+    public float delayAfterFullLoop = 30;
+    public float disappearingRate = 0.8f;
     private float _lastLoopStart = 0;
 
     private AllGPDataConverter _converter;
@@ -52,7 +53,11 @@ public class MainScript : MonoBehaviour
 
     private void SetValueFromConfig()
     {
-        LoopDuration = Configuration.GetConfig().loopDuration;
+        if (Configuration.GetConfig().isDev)
+            return;
+
+        loopDuration = Configuration.GetConfig().loopDuration;
+        delayAfterFullLoop = Configuration.GetConfig().delayAfterFullLoop;
     }
 
     private void FillVisualPool()
@@ -90,7 +95,7 @@ public class MainScript : MonoBehaviour
 
     public void ForwardVisual()
     {
-        var hatched = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, (Time.time - _lastLoopStart) / LoopDuration);
+        var hatched = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, (Time.time - _lastLoopStart) / loopDuration);
 
         foreach (var dataVisual in hatched)
         {
@@ -98,7 +103,7 @@ public class MainScript : MonoBehaviour
         }
 
         UpdateVisualPositions();
-        if(_notYetHatchedDataVisuals.Count == 0 && (Time.time - _lastLoopStart >= LoopDuration + delayAfterFullLoop))
+        if (_notYetHatchedDataVisuals.Count == 0 && (Time.time - _lastLoopStart >= loopDuration + delayAfterFullLoop))
         {
             _currentState = AppStates.RESET;
         }
@@ -121,7 +126,7 @@ public class MainScript : MonoBehaviour
         }
 
         UpdateVisualPositions();
-        if(_hatchedDataVisuals.Count == 0)
+        if (_hatchedDataVisuals.Count == 0)
         {
             _currentState = AppStates.NORMAL;
             _lastLoopStart = Time.time;
@@ -130,19 +135,20 @@ public class MainScript : MonoBehaviour
 
     private void UpdateVisualPositions()
     {
+        float timeElapsed = Time.time - _lastLoopStart;
         foreach (var dataVisual in _hatchedDataVisuals)
         {
             float originalX = dataVisual.Data.X;
             float originalY = dataVisual.Data.Y;
             float circleSize = (float)Math.Sqrt(originalX * originalX + originalY * originalY) / (float)Math.Sqrt(2);
-            float timeStart = 1 - (0.2f + dataVisual.Data.T * 0.8f);
-            float timePosition = dataVisual.Data.T * 1000 + timeStart * Time.time / 100;
+            float timeOffset = 1 - (0.2f + dataVisual.Data.T * 0.8f) * 1000;
+            float timeSpeed = 0.005f + 0.01f * dataVisual.Data.T;
+            float timePosition = (timeElapsed ) * timeSpeed;
 
-            //Make the object go around in a circle 
-            dataVisual.Visual.transform.position = new Vector3(
-                (float)Math.Cos(timePosition * Math.PI) * circleSize,
-                (float)Math.Sin(timePosition * Math.PI) * circleSize,
-                0);
+            float x = (float)Math.Cos(timePosition * 2 * Math.PI + timeOffset) * circleSize;
+            float y = (float)Math.Sin(timePosition * 2 * Math.PI + timeOffset) * circleSize;
+
+            dataVisual.Visual.transform.localPosition = new Vector3(x, y, 0);
         }
     }
 }

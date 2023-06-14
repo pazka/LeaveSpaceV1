@@ -366,7 +366,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   visualPool: {fileID: 2113653719}
   accentVisualPool: {fileID: 1942309948}
-  LoopDuration: 10
+  loopDuration: 10
+  delayAfterFullLoop: 10
+  disappearingRate: 0.1
 --- !u!4 &597425372
 Transform:
   m_ObjectHideFlags: 0
