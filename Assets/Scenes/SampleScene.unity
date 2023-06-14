@@ -368,7 +368,7 @@ MonoBehaviour:
   accentVisualPool: {fileID: 1942309948}
   loopDuration: 10
   delayAfterFullLoop: 10
-  disappearingRate: 0.1
+  disappearingRate: 0.8
 --- !u!4 &597425372
 Transform:
   m_ObjectHideFlags: 0
