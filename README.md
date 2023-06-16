@@ -34,6 +34,6 @@ Then we uses those data to place the object and move in around ( the meaning of 
 - ✅Collect and Clean Data
 - ✅create first visualisation
 - ✅Change color reflecting usage
-- 🔄Loop visual ( slow backward, normal forward)
-- ⬛Add sounds from Stephane Clor
+- ✅Loop visual ( slow backward, normal forward)
+- ✅Add sounds from Stephane Clor
 - ⬛create final visualisation
