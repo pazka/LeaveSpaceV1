@@ -36,6 +36,8 @@ Then we uses those data to place the object and move in around ( the meaning of 
 - ✅Change color reflecting usage
 - ✅Loop visual ( slow backward, normal forward)
 - ✅Add sounds from Stephane Clor
+- ✅Loop visual ( slow backward, normal forward)
+- ✅Add sounds from Stephane Clor
 - ⬛create final visualisation
 
 # Requirement aditionnal
