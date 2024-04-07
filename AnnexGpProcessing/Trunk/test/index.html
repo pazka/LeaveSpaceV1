@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Test apparition of satelites</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="">
+</head>
+
+<body>
+    <div id="canvas"></div>
+
+    <script src="./p5.min.js" async defer></script>
+    <script>
+        let min = 99999999
+        let max = 0
+
+        let filepath = "./19500325--20230330.lte"
+        let file = new XMLHttpRequest()
+        file.open("GET", filepath, false)
+        file.send(null)
+
+        let lines = file.responseText.split("\n")
+        let linesStartingWithOne = lines.filter(line => line.startsWith("1"))
+
+        //get min and max epoch
+        linesStartingWithOne.forEach(line => {
+            let epoch = getEpochFromLteLine(line)
+            if (epoch < min) {
+                min = epoch
+            }
+            if (epoch > max) {
+                max = epoch
+            }
+        })
+
+        function normalizeEpoch(epoch) {
+            return (epoch - min) / (max - min)
+        }
+
+        function getEpochFromLteLine(line) {
+            let epoch = line.substring(18, 32)
+            //convert to date
+            let year = epoch.substring(0, 4)
+            let month = epoch.substring(4, 6)
+            let day = epoch.substring(6, 8)
+            let hour = epoch.substring(8, 10)
+            let minute = epoch.substring(10, 12)
+            let second = epoch.substring(12, 14)
+            let millisecond = epoch.substring(14, 17)
+            let date = new Date(year, month, day, hour, minute, second, millisecond)
+
+            return date
+        }
+
+
+        let canvas = createCanvas(800, 800)
+        canvas.parent("canvas")
+        background(0)
+        stroke(255)
+        strokeWeight(1)
+        noFill()
+    </script>
+</body>
+
+</html>

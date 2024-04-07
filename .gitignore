@@ -86,3 +86,7 @@ ehthumbs.db
 .idea/
 *.sln.iml
 *.csproj.rider
+
+node_modules/
+
+**/node_modules/

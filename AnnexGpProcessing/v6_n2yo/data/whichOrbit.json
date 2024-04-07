@@ -1,0 +1,18 @@
+{
+  "LEO": {
+    "amount": 24357,
+    "satelites": []
+  },
+  "MEO": {
+    "amount": 751,
+    "satelites": []
+  },
+  "GEO": {
+    "amount": 91,
+    "satelites": []
+  },
+  "HEO": {
+    "amount": 86,
+    "satelites": []
+  }
+}
