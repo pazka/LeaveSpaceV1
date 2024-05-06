@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using DataProcessing.AllGP;
 using DataProcessing.Generic;
+using SoundProcessing;
 using Tools;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -19,10 +20,11 @@ public class MainScript : MonoBehaviour
 {
     public VisualPool visualPool;
     public VisualPool accentVisualPool;
+    public PureDataConnector pdConnector;
     public float loopDuration = 30;
     public float delayAfterFullLoop = 30;
-    public float disappearingRate = 0.08f;
-    public float speedCoef = 1;
+    public float disappearingRate = 0.02f;
+    public float speedCoef = 0.7f;
     public float baseSpeed = 0.002f;
     private float _lastLoopStart = 0;
 
@@ -32,6 +34,7 @@ public class MainScript : MonoBehaviour
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
     private AppStates _currentState = AppStates.NORMAL;
+    private float currentIterationTime = 0f;
 
 
     public void Start()
@@ -62,6 +65,7 @@ public class MainScript : MonoBehaviour
         delayAfterFullLoop = Configuration.GetConfig().delayAfterFullLoop;
         speedCoef = Configuration.GetConfig().speedCoef;
         baseSpeed = Configuration.GetConfig().baseSpeed;
+        disappearingRate = Configuration.GetConfig().disappearingRate;
     }
 
     private void FillVisualPool()
@@ -96,16 +100,23 @@ public class MainScript : MonoBehaviour
         else
             throw new Exception("Unknown state");
     }
+    
+    private void UpdateCurrentIterationTime()
+    {
+        currentIterationTime = (Time.time - _lastLoopStart) / loopDuration;
+    }
 
     public void ForwardVisual()
     {
-        var hatched = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, (Time.time - _lastLoopStart) / loopDuration);
+        UpdateCurrentIterationTime();
+        var hatched = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, currentIterationTime);
 
         foreach (var dataVisual in hatched)
         {
             _hatchedDataVisuals.Enqueue(dataVisual);
         }
 
+        SendOscBangs(hatched);
         UpdateVisualPositions();
         if (_notYetHatchedDataVisuals.Count == 0 && (Time.time - _lastLoopStart >= loopDuration + delayAfterFullLoop))
         {
@@ -128,7 +139,7 @@ public class MainScript : MonoBehaviour
 
             _notYetHatchedDataVisuals.Enqueue(dataVisual);
         }
-
+        
         UpdateVisualPositions();
         if (_hatchedDataVisuals.Count == 0)
         {
@@ -153,6 +164,19 @@ public class MainScript : MonoBehaviour
             float y = (float)Math.Sin(timePosition * 2 * Math.PI + timeOffset) * circleSize;
 
             dataVisual.Visual.transform.localPosition = new Vector3(x, y, 0);
+        }
+    }
+    
+    private void SendOscBangs(ICollection<DataVisual> hatchedData)
+    {
+        pdConnector.SendOscMessage("/data_clock", currentIterationTime);
+
+        foreach (var dataVisual in hatchedData)
+        {
+            pdConnector.SendOscMessage("/data_bang", 1);
+            
+            if (dataVisual.Type == "accent")
+                pdConnector.SendOscMessage("/data_accent_bang", 1);
         }
     }
 }
