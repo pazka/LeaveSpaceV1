@@ -31,6 +31,8 @@ Then we uses those data to place the object and move in around ( the meaning of 
 
 ## TODO
 
+### V0.1
+
 - ✅Collect and Clean Data
 - ✅create first visualisation
 - ✅Change color reflecting usage
@@ -38,8 +40,15 @@ Then we uses those data to place the object and move in around ( the meaning of 
 - ✅Add sounds from Stephane Clor
 - ✅Loop visual ( slow backward, normal forward)
 - ✅Add sounds from Stephane Clor
-- ⬛create final visualisation
 
+### V1
+
+- [] musk apparait rapide ( 3* plus rapide stalittes)  
+- [] apparition musk accélère le visuel ( 1.5** plus rapide amx)
+- [] extrapolation bleue :
+- [] Musk extrapolé  +
+- [] 1 musk aparait X débirs apparait
+  
 # Requirement aditionnal
 
 - 1 dot must be a sincere ovni

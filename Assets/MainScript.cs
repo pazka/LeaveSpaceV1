@@ -27,6 +27,8 @@ public class MainScript : MonoBehaviour
     public float speedCoef = 0.7f;
     public float baseSpeed = 0.002f;
     private float _lastLoopStart = 0;
+    public int[] VisualDimension = new int[2] { 1920, 2160 };
+    public Transform VisualPosition = new RectTransform();
 
     private AllGPDataConverter _converter;
     private List<AllGPData> _allGpDataConverted;
@@ -40,6 +42,11 @@ public class MainScript : MonoBehaviour
     public void Start()
     {
         SetValueFromConfig();
+        if (Display.displays.Length > 1)
+            Display.displays[1].Activate();
+        else
+            Debug.LogError("No second display detected");
+        
         _eventHatcher = new AllGpDataEventHatcher(visualPool, accentVisualPool);
         _hatchedDataVisuals = new Queue<DataVisual>();
         _notYetHatchedDataVisuals = new Queue<DataVisual>();
@@ -51,7 +58,7 @@ public class MainScript : MonoBehaviour
         if (_converter == null)
             throw new Exception("Converter is null");
 
-        _converter.Init(1920, 1080);
+        _converter.Init(VisualDimension[0], VisualDimension[1]);
         FillVisualPool();
         _lastLoopStart = Time.time;
     }
@@ -100,7 +107,7 @@ public class MainScript : MonoBehaviour
         else
             throw new Exception("Unknown state");
     }
-    
+
     private void UpdateCurrentIterationTime()
     {
         currentIterationTime = (Time.time - _lastLoopStart) / loopDuration;
@@ -139,7 +146,7 @@ public class MainScript : MonoBehaviour
 
             _notYetHatchedDataVisuals.Enqueue(dataVisual);
         }
-        
+
         UpdateVisualPositions();
         if (_hatchedDataVisuals.Count == 0)
         {
@@ -163,10 +170,10 @@ public class MainScript : MonoBehaviour
             float x = (float)Math.Cos(timePosition * 2 * Math.PI + timeOffset) * circleSize;
             float y = (float)Math.Sin(timePosition * 2 * Math.PI + timeOffset) * circleSize;
 
-            dataVisual.Visual.transform.localPosition = new Vector3(x, y, 0);
+            dataVisual.Visual.transform.localPosition = VisualPosition.localPosition + new Vector3(x, y, 0);
         }
     }
-    
+
     private void SendOscBangs(ICollection<DataVisual> hatchedData)
     {
         pdConnector.SendOscMessage("/data_clock", currentIterationTime);
@@ -174,7 +181,7 @@ public class MainScript : MonoBehaviour
         foreach (var dataVisual in hatchedData)
         {
             pdConnector.SendOscMessage("/data_bang", 1);
-            
+
             if (dataVisual.Type == "accent")
                 pdConnector.SendOscMessage("/data_accent_bang", 1);
         }
