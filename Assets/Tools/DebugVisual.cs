@@ -20,7 +20,10 @@ public class DebugVisual : MonoBehaviour
     {
         if (!gameObject.activeSelf)
             return;
-
-        debugText.text = text + "\n" + debugText.text;
+        
+        var nextText = text + "\n" + debugText.text; 
+        if (nextText.Length > 500)
+            nextText = nextText.Substring(0, 1000);
+        debugText.SetText(nextText);
     }
 }

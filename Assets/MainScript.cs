@@ -15,6 +15,7 @@ using Visuals;
 public enum AppStates
 {
     NORMAL,
+    NORMAL_MUSK,
     FUTURE,
     CONTEMPLATION,
     RESET
@@ -117,60 +118,15 @@ public class MainScript : MonoBehaviour
             }
         }
     }
-
-    // Update is called once per frame
-    public void Update()
-    {
-        //check if key is pressed
-        if (Input.GetKeyDown(KeyBindings.Quit))
-        {
-            Application.Quit();
-        }
-
-        UpdateCurrentIterationTime();
-
-        if (_eventHatcher == null)
-            return;
-
-        if (_currentState == AppStates.NORMAL)
-        {
-            ForwardVisual();
-        }
-        else if (_currentState == AppStates.FUTURE)
-        {
-            AccelerateVisual();
-            ForwardVisual();
-        }
-        else if (_currentState == AppStates.CONTEMPLATION)
-        {
-            AccelerateVisual();
-        }
-        else if (_currentState == AppStates.RESET)
-        {
-            RestartVisual();
-        }
-        else
-            throw new Exception("Unknown state");
-
-        UpdateVisualPositions();
-
-        UpdateCurrentDataProgress();
-        CheckForStateChange();
-    }
-
-    private void UpdateCurrentIterationTime()
-    {
-        _currentIterationTime = (Time.time - _lastLoopStart) / loopDuration;
-        progressBar.transform.localScale = new Vector3(_currentIterationTime * 1920, 10, 1);
-    }
-
-    private void UpdateCurrentDataProgress()
-    {
-        _currentDataProgress = 1f - (float)_allGpData.Count / _notYetHatchedDataVisuals.Count;
-    }
-
     public void CheckForStateChange()
     {
+        if (_currentState == AppStates.NORMAL && _hatchedDataVisuals.FirstOrDefault(dv => dv.Data.IsFake) != null)
+        {
+            // starts future display effects
+            _currentState = AppStates.FUTURE;
+            debugVisual.AddTextToLog("Future");
+        }
+        
         if (_currentState == AppStates.NORMAL && _hatchedDataVisuals.FirstOrDefault(dv => dv.Data.IsFake) != null)
         {
             // starts future display effects
@@ -203,6 +159,58 @@ public class MainScript : MonoBehaviour
             debugVisual.AddTextToLog("Normal");
         }
         
+    }
+
+
+    // Update is called once per frame
+    public void Update()
+    {
+        //check if key is pressed
+        if (Input.GetKeyDown(KeyBindings.Quit))
+        {
+            Application.Quit();
+        }
+
+        UpdateCurrentIterationTime();
+
+        if (_eventHatcher == null)
+            return;
+
+        if (_currentState == AppStates.NORMAL)
+        {
+            ForwardVisual();
+        }
+        else if (_currentState == AppStates.FUTURE || _currentState == AppStates.NORMAL_MUSK)
+        {
+            AccelerateVisual();
+            ForwardVisual();
+        }
+        else if (_currentState == AppStates.CONTEMPLATION)
+        {
+            AccelerateVisual();
+        }
+        else if (_currentState == AppStates.RESET)
+        {
+            RestartVisual();
+        }
+        else
+            throw new Exception("Unknown state");
+
+        UpdateVisualPositions();
+
+        UpdateCurrentDataProgress();
+        CheckForStateChange();
+    }
+
+    private void UpdateCurrentIterationTime()
+    {
+        _currentIterationTime = (Time.time - _lastLoopStart) / loopDuration;
+        progressBar.transform.localScale = new Vector3(_currentIterationTime * 1920, 10, 1);
+    }
+
+    private void UpdateCurrentDataProgress()
+    {
+        _currentDataProgress = 1f - (float)_allGpData.Count / _notYetHatchedDataVisuals.Count;
     }
 
     public void ForwardVisual()

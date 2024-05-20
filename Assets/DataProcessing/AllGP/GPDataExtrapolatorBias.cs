@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using DataProcessing.Generic;
 
@@ -92,8 +93,12 @@ namespace DataProcessing.AllGP
                     //add debris for each musks
                     for (int k = 0; k < nbOfDebrisForEachFutureMusk; k++)
                     {
+                        var random = new System.Random();
+                        var amountDeviationX = 10 * (float)(random.NextDouble() - 0.5f);
+                        var amountDeviationY = 10 * (float)(random.NextDouble() - 0.5f);
+                        
                         var newDebrisT = newT + k * timeSliceForEachAmount;
-                        var newDebris = new GPData(null, newX - k, newY - k, newDebrisT, ElsetObjectType.DEBRIS_OTHER,
+                        var newDebris = new GPData(null, newX - amountDeviationX, newY - amountDeviationY, newDebrisT, ElsetObjectType.DEBRIS_OTHER,
                             true);
                         _extrapolatedData.Add(newDebris);
                     }
