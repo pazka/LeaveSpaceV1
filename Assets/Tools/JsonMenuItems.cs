@@ -10,10 +10,6 @@ namespace Tools
 
         private void Start()
         {
-            allValues.Add("Test1", "ok");
-            allValues.Add("Test2", "koko");
-            allValues.Add("Test3", "ouioui");
-
             var i = 0;
             foreach (var value in allValues)
             {

@@ -12,6 +12,12 @@ namespace Tools
         {
             var config = Configuration.GetConfig();
             isDisplayed = config.isDev;
+            
+            //find object with name "ProgressBar" and set it to progressBar
+            GameObject progressBar = GameObject.Find("ProgressBar");
+            if (progressBar != null)
+            progressBar.transform.localScale = new Vector3(0, 10, 1);
+            
             state = !isDisplayed;
         }
 
@@ -20,7 +26,7 @@ namespace Tools
         {
             if (Input.GetKeyDown(KeyBindings.Quit)) Application.Quit();
 
-            if (Input.GetKeyDown(KeyBindings.ToggleDebugText)) isDisplayed = !isDisplayed;
+            if (Input.GetKeyDown(KeyBindings.ToggleDebug)) isDisplayed = !isDisplayed;
 
             if (state != isDisplayed)
             {

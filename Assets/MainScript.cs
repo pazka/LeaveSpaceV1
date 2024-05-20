@@ -16,6 +16,7 @@ public enum AppStates
 {
     NORMAL,
     FUTURE,
+    CONTEMPLATION,
     RESET
 }
 
@@ -32,8 +33,10 @@ public class MainScript : MonoBehaviour
     public float baseSpeed = 0.002f;
     public float accelerationRate = 1.05f;
     private float _lastLoopStart = 0;
-    public int[] VisualDimension = new int[2] { 1920, 2160 };
-    public Transform VisualPosition = new RectTransform();
+    public int[] visualDimension = new int[2] { 1920, 2160 };
+    public Transform visualPosition = new RectTransform();
+    public GameObject progressBar;
+    public DebugVisual debugVisual;
 
     private GPDataConverter _converter;
     private List<IData> _allGpData;
@@ -66,9 +69,10 @@ public class MainScript : MonoBehaviour
         if (_converter == null)
             throw new Exception("Converter is null");
 
-        _converter.Init(VisualDimension[0], VisualDimension[1]);
-        
-        _extrapolator = FactoryDataExtrapolator.GetInstance(FactoryDataExtrapolator.AvailableDataExtrapolatorTypes.ALLGP);
+        _converter.Init(visualDimension[0], visualDimension[1]);
+
+        _extrapolator =
+            FactoryDataExtrapolator.GetInstance(FactoryDataExtrapolator.AvailableDataExtrapolatorTypes.ALLGP);
         LoadDataVisuals();
         _lastLoopStart = Time.time;
     }
@@ -97,7 +101,7 @@ public class MainScript : MonoBehaviour
 
             allGpDataConverted.Add(gpData);
         }
-        
+
         _extrapolator.InitExtrapolation(allGpDataConverted, null);
         _allGpData = _extrapolator.RetrieveExtrapolation().ToList();
         for (var i = 0; i < _allGpData.Count; i++)
@@ -112,7 +116,6 @@ public class MainScript : MonoBehaviour
                 _notYetHatchedDataVisuals.Enqueue(new DataVisual(data, visualPool.GetOne()));
             }
         }
-
     }
 
     // Update is called once per frame
@@ -138,6 +141,10 @@ public class MainScript : MonoBehaviour
             AccelerateVisual();
             ForwardVisual();
         }
+        else if (_currentState == AppStates.CONTEMPLATION)
+        {
+            AccelerateVisual();
+        }
         else if (_currentState == AppStates.RESET)
         {
             RestartVisual();
@@ -154,6 +161,7 @@ public class MainScript : MonoBehaviour
     private void UpdateCurrentIterationTime()
     {
         _currentIterationTime = (Time.time - _lastLoopStart) / loopDuration;
+        progressBar.transform.localScale = new Vector3(_currentIterationTime * 1920, 10, 1);
     }
 
     private void UpdateCurrentDataProgress()
@@ -167,16 +175,24 @@ public class MainScript : MonoBehaviour
         {
             // starts future display effects
             _currentState = AppStates.FUTURE;
-            _lastLoopStart = Time.time;
+            debugVisual.AddTextToLog("Future");
         }
 
         if (_currentState == AppStates.FUTURE &&
             _notYetHatchedDataVisuals.Count == 0 &&
-            (Time.time - _lastLoopStart >= loopDuration + delayAfterFullLoop)
+            (Time.time - _lastLoopStart >= loopDuration)
            )
+        {
+            // contemplate crisis
+            _currentState = AppStates.CONTEMPLATION;
+            debugVisual.AddTextToLog("Contemplation");
+        }
+
+        if ((Time.time - _lastLoopStart >= loopDuration + delayAfterFullLoop))
         {
             // reset loop
             _currentState = AppStates.RESET;
+            debugVisual.AddTextToLog("Reset");
         }
 
         if (_currentState == AppStates.RESET && _hatchedDataVisuals.Count == 0)
@@ -184,7 +200,9 @@ public class MainScript : MonoBehaviour
             // starts loop
             _currentState = AppStates.NORMAL;
             _lastLoopStart = Time.time;
+            debugVisual.AddTextToLog("Normal");
         }
+        
     }
 
     public void ForwardVisual()
@@ -232,7 +250,7 @@ public class MainScript : MonoBehaviour
         float timeElapsed = Time.time - _lastLoopStart;
         foreach (var dataVisual in _hatchedDataVisuals)
         {
-            dataVisual.UpdatePositionFromContext(timeElapsed, VisualPosition);
+            dataVisual.UpdatePositionFromContext(timeElapsed, visualPosition);
         }
     }
 
