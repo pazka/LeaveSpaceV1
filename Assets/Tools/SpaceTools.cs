@@ -5,7 +5,7 @@ namespace Tools
 {
     public static class SpaceTools
     {
-        public static (float x, float y) GetXYFromAllGpJsonData(AllGpJsonData data)
+        public static (float x, float y) GetXYFromAllGpJsonData(GpJsonData data)
         {
             var meanMotion = float.Parse(data.MEAN_MOTION);
             var eccentricity = float.Parse(data.ECCENTRICITY);
@@ -21,7 +21,7 @@ namespace Tools
 
             return (x * eccentricity, y * eccentricity);
         }
-        public static (float x, float y) GetXYFromAllGpJsonDataVisu(AllGpJsonData data)
+        public static (float x, float y) GetXYFromAllGpJsonDataVisu(GpJsonData data)
         {
             if(data.DataVisu == null)
                 return (0, 0);

@@ -21,7 +21,7 @@ namespace DataProcessing
             {
                 case AvailableDataExtrapolatorTypes.ALLGP:
                     if (!instances.ContainsKey(dataExtrapolatorType))
-                        instances.Add(dataExtrapolatorType, new AllGPDataExtrapolatorBias());
+                        instances.Add(dataExtrapolatorType, new GPDataExtrapolatorBias());
 
                     return instances[dataExtrapolatorType];
 

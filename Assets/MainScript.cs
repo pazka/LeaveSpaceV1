@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
+using DataProcessing;
 using DataProcessing.AllGP;
 using DataProcessing.Generic;
 using SoundProcessing;
@@ -13,6 +15,7 @@ using Visuals;
 public enum AppStates
 {
     NORMAL,
+    FUTURE,
     RESET
 }
 
@@ -25,18 +28,23 @@ public class MainScript : MonoBehaviour
     public float delayAfterFullLoop = 30;
     public float disappearingRate = 0.02f;
     public float speedCoef = 0.7f;
+    public float speedCoefOfMusk = 1.2f;
     public float baseSpeed = 0.002f;
+    public float accelerationRate = 1.05f;
     private float _lastLoopStart = 0;
     public int[] VisualDimension = new int[2] { 1920, 2160 };
     public Transform VisualPosition = new RectTransform();
 
-    private AllGPDataConverter _converter;
-    private List<AllGPData> _allGpDataConverted;
+    private GPDataConverter _converter;
+    private List<IData> _allGpData;
     private EventHatcher<DataVisual> _eventHatcher;
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
+    private IDataExtrapolator _extrapolator;
     private AppStates _currentState = AppStates.NORMAL;
-    private float currentIterationTime = 0f;
+    private float _currentIterationTime = 0f;
+    private float _currentDataProgress = 0f;
+    private ICollection<DataVisual> _latestHatchedDataVisuals;
 
 
     public void Start()
@@ -46,20 +54,22 @@ public class MainScript : MonoBehaviour
             Display.displays[1].Activate();
         else
             Debug.LogError("No second display detected");
-        
-        _eventHatcher = new AllGpDataEventHatcher(visualPool, accentVisualPool);
+
+        _eventHatcher = new GpDataEventHatcher(visualPool, accentVisualPool);
         _hatchedDataVisuals = new Queue<DataVisual>();
         _notYetHatchedDataVisuals = new Queue<DataVisual>();
-        _allGpDataConverted = new List<AllGPData>();
+        _allGpData = new List<IData>();
 
         _converter =
             FactoryDataConverter.GetInstance(FactoryDataConverter.AvailableDataManagerTypes
-                .ALLGP) as AllGPDataConverter;
+                .ALLGP) as GPDataConverter;
         if (_converter == null)
             throw new Exception("Converter is null");
 
         _converter.Init(VisualDimension[0], VisualDimension[1]);
-        FillVisualPool();
+        
+        _extrapolator = FactoryDataExtrapolator.GetInstance(FactoryDataExtrapolator.AvailableDataExtrapolatorTypes.ALLGP);
+        LoadDataVisuals();
         _lastLoopStart = Time.time;
     }
 
@@ -71,21 +81,38 @@ public class MainScript : MonoBehaviour
         loopDuration = Configuration.GetConfig().loopDuration;
         delayAfterFullLoop = Configuration.GetConfig().delayAfterFullLoop;
         speedCoef = Configuration.GetConfig().speedCoef;
+        speedCoefOfMusk = Configuration.GetConfig().speedCoefOfMusk;
         baseSpeed = Configuration.GetConfig().baseSpeed;
         disappearingRate = Configuration.GetConfig().disappearingRate;
+        accelerationRate = Configuration.GetConfig().accelerationRate;
     }
 
-    private void FillVisualPool()
+    private void LoadDataVisuals()
     {
+        var allGpDataConverted = new List<GPData>();
         while (_converter.GetNextData() is { } data)
         {
-            if (data is not AllGPData gpData)
-                throw new Exception("Data is not of type AllGPData");
+            if (data is not GPData gpData)
+                throw new Exception("Data is not of type GPData");
 
-            _allGpDataConverted.Add(gpData);
-            var dataVisual = new DataVisual(gpData, null);
-            _notYetHatchedDataVisuals.Enqueue(dataVisual);
+            allGpDataConverted.Add(gpData);
         }
+        
+        _extrapolator.InitExtrapolation(allGpDataConverted, null);
+        _allGpData = _extrapolator.RetrieveExtrapolation().ToList();
+        for (var i = 0; i < _allGpData.Count; i++)
+        {
+            var data = _allGpData[i] as GPData;
+            if (data.IsFake)
+            {
+                _notYetHatchedDataVisuals.Enqueue(new DataVisual(data, accentVisualPool.GetOne()));
+            }
+            else
+            {
+                _notYetHatchedDataVisuals.Enqueue(new DataVisual(data, visualPool.GetOne()));
+            }
+        }
+
     }
 
     // Update is called once per frame
@@ -97,41 +124,87 @@ public class MainScript : MonoBehaviour
             Application.Quit();
         }
 
+        UpdateCurrentIterationTime();
+
         if (_eventHatcher == null)
             return;
 
         if (_currentState == AppStates.NORMAL)
+        {
             ForwardVisual();
+        }
+        else if (_currentState == AppStates.FUTURE)
+        {
+            AccelerateVisual();
+            ForwardVisual();
+        }
         else if (_currentState == AppStates.RESET)
+        {
             RestartVisual();
+        }
         else
             throw new Exception("Unknown state");
+
+        UpdateVisualPositions();
+
+        UpdateCurrentDataProgress();
+        CheckForStateChange();
     }
 
     private void UpdateCurrentIterationTime()
     {
-        currentIterationTime = (Time.time - _lastLoopStart) / loopDuration;
+        _currentIterationTime = (Time.time - _lastLoopStart) / loopDuration;
+    }
+
+    private void UpdateCurrentDataProgress()
+    {
+        _currentDataProgress = 1f - (float)_allGpData.Count / _notYetHatchedDataVisuals.Count;
+    }
+
+    public void CheckForStateChange()
+    {
+        if (_currentState == AppStates.NORMAL && _hatchedDataVisuals.FirstOrDefault(dv => dv.Data.IsFake) != null)
+        {
+            // starts future display effects
+            _currentState = AppStates.FUTURE;
+            _lastLoopStart = Time.time;
+        }
+
+        if (_currentState == AppStates.FUTURE &&
+            _notYetHatchedDataVisuals.Count == 0 &&
+            (Time.time - _lastLoopStart >= loopDuration + delayAfterFullLoop)
+           )
+        {
+            // reset loop
+            _currentState = AppStates.RESET;
+        }
+
+        if (_currentState == AppStates.RESET && _hatchedDataVisuals.Count == 0)
+        {
+            // starts loop
+            _currentState = AppStates.NORMAL;
+            _lastLoopStart = Time.time;
+        }
     }
 
     public void ForwardVisual()
     {
-        UpdateCurrentIterationTime();
-        var hatched = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, currentIterationTime);
+        _latestHatchedDataVisuals = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, _currentIterationTime);
 
-        foreach (var dataVisual in hatched)
+        foreach (var dataVisual in _latestHatchedDataVisuals)
         {
             _hatchedDataVisuals.Enqueue(dataVisual);
         }
 
-        SendOscBangs(hatched);
-        UpdateVisualPositions();
-        if (_notYetHatchedDataVisuals.Count == 0 && (Time.time - _lastLoopStart >= loopDuration + delayAfterFullLoop))
-        {
-            _currentState = AppStates.RESET;
-        }
+        SendOscBangs();
     }
 
-    private void RestartVisual()
+    public void AccelerateVisual()
+    {
+        speedCoef *= accelerationRate;
+    }
+
+    void ReturnVisualsToPool()
     {
         var nbOfObjectsToDisappear = Math.Max(_hatchedDataVisuals.Count * disappearingRate,
             Math.Min(_hatchedDataVisuals.Count, 200));
@@ -146,44 +219,25 @@ public class MainScript : MonoBehaviour
 
             _notYetHatchedDataVisuals.Enqueue(dataVisual);
         }
-
-        UpdateVisualPositions();
-        if (_hatchedDataVisuals.Count == 0)
-        {
-            _currentState = AppStates.NORMAL;
-            _lastLoopStart = Time.time;
-        }
     }
+
+    private void RestartVisual()
+    {
+        ReturnVisualsToPool();
+    }
+
 
     private void UpdateVisualPositions()
     {
         float timeElapsed = Time.time - _lastLoopStart;
         foreach (var dataVisual in _hatchedDataVisuals)
         {
-            float originalX = dataVisual.Data.X;
-            float originalY = dataVisual.Data.Y;
-            float circleSize = (float)Math.Sqrt(originalX * originalX + originalY * originalY) / (float)Math.Sqrt(2);
-            float timeOffset = 1 - (0.2f + dataVisual.Data.T * 0.8f) * 10000;
-            float timeSpeed = baseSpeed + (speedCoef / 300) * dataVisual.Data.T;
-            float timePosition = (timeElapsed) * timeSpeed;
-
-            float x = (float)Math.Cos(timePosition * 2 * Math.PI + timeOffset) * circleSize;
-            float y = (float)Math.Sin(timePosition * 2 * Math.PI + timeOffset) * circleSize;
-
-            dataVisual.Visual.transform.localPosition = VisualPosition.localPosition + new Vector3(x, y, 0);
+            dataVisual.UpdatePositionFromContext(timeElapsed, VisualPosition);
         }
     }
 
-    private void SendOscBangs(ICollection<DataVisual> hatchedData)
+    private void SendOscBangs()
     {
-        pdConnector.SendOscMessage("/data_clock", currentIterationTime);
-
-        foreach (var dataVisual in hatchedData)
-        {
-            pdConnector.SendOscMessage("/data_bang", 1);
-
-            if (dataVisual.Type == "accent")
-                pdConnector.SendOscMessage("/data_accent_bang", 1);
-        }
+        pdConnector.SendOscMessage("/data_clock", _currentDataProgress);
     }
 }

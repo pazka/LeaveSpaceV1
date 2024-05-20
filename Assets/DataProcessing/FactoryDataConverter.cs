@@ -19,7 +19,7 @@ public static class FactoryDataConverter
         {
             case AvailableDataManagerTypes.ALLGP:
                 if (!instances.ContainsKey(dataManagerType))
-                    instances.Add(dataManagerType, new AllGPDataConverter());
+                    instances.Add(dataManagerType, new GPDataConverter());
 
                 return instances[dataManagerType];
 

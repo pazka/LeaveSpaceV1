@@ -9,7 +9,7 @@ using UnityEngine;
 namespace DataProcessing.AllGP
 {
     [Serializable]
-    public class AllGpJsonData
+    public class GpJsonData
     {
         public string CCSDS_OMM_VERS;
         public string COMMENT;
@@ -62,8 +62,15 @@ namespace DataProcessing.AllGP
         public float projected2DRadius;
     }
 
+    public enum ElsetObjectType
+    {
+        PAYLOAD,
+        MUSK,
+        DEBRIS_OTHER
+    }
 
-    public class AllGPDataReader : DataProcessing.Generic.IDataReader
+
+    public class GPDataReader : DataProcessing.Generic.IDataReader
     {
         [Serializable]
         public class AllGpJsonMetadata
@@ -79,10 +86,10 @@ namespace DataProcessing.AllGP
         [Serializable]
         public class AllGPJson
         {
-            public List<AllGpJsonData> data;
+            public List<GpJsonData> data;
         }
 
-        List<AllGpJsonData> allRawData;
+        List<GpJsonData> allRawData;
         private int currentIndex;
         readonly string filePath = Application.dataPath + "/StreamingAssets/all_gp_data_visu.json";
 
@@ -97,7 +104,7 @@ namespace DataProcessing.AllGP
             if (allRawData.Count > 0) return;
 
             var fileContent = File.ReadAllText(filePath);
-            var json = JsonUtility.FromJson<AllGPJson>("{\"data\":"+fileContent+"}");
+            var json = JsonUtility.FromJson<AllGPJson>("{\"data\":" + fileContent + "}");
             foreach (var raw in json.data)
             {
                 allRawData.Add(raw);
@@ -106,13 +113,25 @@ namespace DataProcessing.AllGP
 
         public void Clean()
         {
-            allRawData = new List<AllGpJsonData>();
+            allRawData = new List<GpJsonData>();
             currentIndex = 0;
         }
 
-        private bool DataIsToKeep(AllGpJsonData data)
+        private bool DataIsToKeep(GpJsonData data)
         {
             return IsDecayed(data.DECAY_DATE) && data.DataVisu != null;
+        }
+
+        private ElsetObjectType GetElsetObjectType(GpJsonData data)
+        {
+            var isPayload = data.OBJECT_TYPE == "PAYLOAD";
+            var isCompanySpaceX = data.OBJECT_NAME.Contains("STARLINK");
+
+            if (isPayload && isCompanySpaceX)
+                return ElsetObjectType.MUSK;
+            if (isPayload)
+                return ElsetObjectType.PAYLOAD;
+            return ElsetObjectType.DEBRIS_OTHER;
         }
 
         public TimedData GetData()
@@ -136,10 +155,14 @@ namespace DataProcessing.AllGP
 
             var position = SpaceTools.GetXYFromAllGpJsonDataVisu(currRawData);
 
-            var newData = new AllGPData(currRawData,
+            var objectType = GetElsetObjectType(currRawData);
+
+            var newData = new GPData(currRawData,
                 position.x,
                 position.y,
-                potentialDate
+                potentialDate,
+                objectType,
+                false
             );
 
             return newData;

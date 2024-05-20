@@ -19,7 +19,7 @@ public static class FactoryDataReader
         {
             case AvailableDataReaderTypes.ALLGP:
                 if (!instances.ContainsKey(dataReaderType))
-                    instances.Add(dataReaderType, new AllGPDataReader());
+                    instances.Add(dataReaderType, new GPDataReader());
 
                 return instances[dataReaderType];
 

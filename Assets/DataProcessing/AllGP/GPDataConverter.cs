@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DataProcessing.AllGP
 {
-    public class AllGPDataConverter : DataConverter
+    public class GPDataConverter : DataConverter
     {
         private IDataReader _reader;
         private List<TimedData> _allDataRead;
@@ -60,8 +60,8 @@ namespace DataProcessing.AllGP
             if (_currentDataIndex >= _allDataRead.Count)
                 return null;
 
-            if (_allDataRead[_currentDataIndex++] is not AllGPData data)
-                throw new Exception("Data is not of type AllGPData");
+            if (_allDataRead[_currentDataIndex++] is not GPData data)
+                throw new Exception("Data is not of type GPData");
 
             var position = SpaceTools.GetXYFromAllGpJsonDataVisu(data.RawJson);
 

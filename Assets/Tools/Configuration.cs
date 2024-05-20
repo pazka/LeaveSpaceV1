@@ -15,8 +15,10 @@ namespace Tools
         public float loopDuration;
         public float delayAfterFullLoop;
         public float speedCoef;
+        public float speedCoefOfMusk;
         public float baseSpeed;
         public float disappearingRate;
+        public float accelerationRate;
         public bool isDev;
         public float[] baseColor;
         public float[] accentColor;
@@ -32,8 +34,10 @@ namespace Tools
             float loopDuration,
             float delayAfterFullLoop,
             float speedCoef,
+            float speedCoefOfMusk,
             float baseSpeed,
             float disappearingRate,
+            float accelerationRate,
             bool isDev,
             float[] baseColor,
             float[] accentColor
@@ -49,8 +53,10 @@ namespace Tools
             this.loopDuration = loopDuration;
             this.delayAfterFullLoop = delayAfterFullLoop;
             this.disappearingRate = disappearingRate;
+            this.accelerationRate = accelerationRate;
             this.isDev = isDev;
             this.speedCoef = speedCoef;
+            this.speedCoefOfMusk = speedCoefOfMusk;
             this.baseSpeed = baseSpeed;
             this.baseColor = baseColor;
             this.accentColor = accentColor;
@@ -61,20 +67,22 @@ namespace Tools
     {
         private static readonly string ConfigPath = Application.dataPath + "/StreamingAssets/config.json";
         public static string ConfigContent;
+        private  static JsonConfiguration _config;
 
         public static JsonConfiguration GetConfig()
         {
+            if(_config != null) return _config;
+            
             //create config file if not exist
-
             if (ConfigContent == null) ConfigContent = File.ReadAllText(ConfigPath);
-            var config = JsonUtility.FromJson<JsonConfiguration>(ConfigContent);
+            _config = JsonUtility.FromJson<JsonConfiguration>(ConfigContent);
 
             if (Debug.isDebugBuild)
             {
-                config.isDev = true;
+                _config.isDev = true;
             }
 
-            return config;
+            return _config;
         }
     }
 }
