@@ -76,6 +76,26 @@ public class MainDebugScript : MonoBehaviour
             visual.transform.position = new Vector3(posX, data.Y, 0);
             visual.SetActive(true);
         }
+        
+        // write a textmesh at 0 coords and one at 1920 coords
+        
+        var textMesh = new GameObject("TextMesh");
+        var textMeshComponent = textMesh.AddComponent<TextMesh>();
+        textMeshComponent.text = "0";
+        textMeshComponent.fontSize = 100;
+        textMeshComponent.color = Color.red;
+        textMeshComponent.fontStyle = FontStyle.Bold;
+        textMesh.transform.position = new Vector3(0, 0, 1);
+        textMesh.SetActive(true);
+        
+        var textMesh2 = new GameObject("TextMesh2");
+        var textMeshComponent1 = textMesh2.AddComponent<TextMesh>();
+        textMeshComponent1.text = "1920";
+        textMeshComponent1.fontSize = 100;
+        textMeshComponent1.color = Color.red;
+        textMeshComponent1.fontStyle =  FontStyle.Bold;
+        textMesh2.transform.position = new Vector3(1920, 0, 1);
+        textMesh2.SetActive(true);
     }
 
     public void Update()

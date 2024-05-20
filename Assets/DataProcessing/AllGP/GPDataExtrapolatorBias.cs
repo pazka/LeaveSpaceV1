@@ -37,7 +37,7 @@ namespace DataProcessing.AllGP
             //T 100 = year 2023
 
             //slice the time between the first Musk launch and the last one into 100 segments and extrapolate the data to 2100
-            var yearToTarget = 2100;
+            var yearToTarget = 2050;
             var coefSlicingAmount = 100;
             var muskApparitionCoefs = new float[coefSlicingAmount];
             var xAvgForEachCoef = new float[coefSlicingAmount];
