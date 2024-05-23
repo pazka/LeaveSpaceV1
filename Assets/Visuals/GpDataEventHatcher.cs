@@ -16,7 +16,7 @@ namespace Visuals
             this.visualPool = visualPool;
             this.accentVisualPool = accentVisualPool;
             visualPool.PreloadNObjects(34000);
-            accentVisualPool.PreloadNObjects(20000);
+            accentVisualPool.PreloadNObjects(120000);
             
             float[] newBaseColor = Configuration.GetConfig().baseColor;
             float[] newAccentColor = Configuration.GetConfig().accentColor;

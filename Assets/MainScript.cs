@@ -296,6 +296,7 @@ public class MainScript : MonoBehaviour
         float timeElapsed = Time.time - _lastLoopStart;
         float originalX = dataVisual.Data.X;
         float originalY = dataVisual.Data.Y;
+        
         float minCircle = Configuration.GetConfig().minStartingCircleSize;
         float circleSize = minCircle +
                            (float)Math.Sqrt(originalX * originalX + originalY * originalY) / (float)Math.Sqrt(2);
