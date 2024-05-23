@@ -11,6 +11,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Visuals;
+using Logger = Tools.Logger;
 
 public enum AppStates
 {
@@ -27,11 +28,11 @@ public class MainScript : MonoBehaviour
     public VisualPool accentVisualPool;
     public PureDataConnector pdConnector;
     public float loopDuration = 30;
-    public float delayAfterFullLoop = 30;
-    public float disappearingRate = 0.02f;
-    public float endingBaseSpeed = 1.5f;
+    public float contemplationDelay = 5;
+    public float disappearingRate = 0.05f;
+    public float endingBaseSpeed = 0.01f;
     public float startingBaseSpeed = 0.002f;
-    public float speedToTCoef = 0.7f;
+    public float dataTimeAccelerator = 0.00002f;
     public float fasterMuskCoef = 3f;
     private float _lastLoopStart = 0;
     public int[] visualDimension = new int[2] { 1920, 2160 };
@@ -42,13 +43,15 @@ public class MainScript : MonoBehaviour
     private GPDataConverter _converter;
     private List<GPData> _allGpData;
     private EventHatcher<DataVisual> _eventHatcher;
-    private float currentSpeedCoef = 0.7f;
-    private float accelerationStartDataProgress = 0f;
+    private float currentSpeed = 0.7f;
+    private float muskApparitionTime = 0f;
+    private float resetStartingTime = 0f;
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
     private IDataExtrapolator _extrapolator;
     private AppStates _currentState = AppStates.NORMAL;
-    private float _currentIterationTime = 0f;
+    private float _currentIterationTimeForData = 0f;
+    private float _currentIterationTimeForDebug = 0f;
     private float _currentDataProgress = 0f;
     private ICollection<DataVisual> _latestHatchedDataVisuals;
 
@@ -56,11 +59,9 @@ public class MainScript : MonoBehaviour
     public void Start()
     {
         SetValueFromConfig();
-        currentSpeedCoef = startingBaseSpeed;
+        currentSpeed = startingBaseSpeed;
         if (Display.displays.Length > 1)
             Display.displays[1].Activate();
-        else
-            Debug.LogError("No second display detected");
 
         _eventHatcher = new GpDataEventHatcher(visualPool, accentVisualPool);
         _hatchedDataVisuals = new Queue<DataVisual>();
@@ -84,11 +85,11 @@ public class MainScript : MonoBehaviour
 
             allGpDataConverted.Add(gpData);
         }
-        
+
         _extrapolator =
             FactoryDataExtrapolator.GetInstance(FactoryDataExtrapolator.AvailableDataExtrapolatorTypes.ALLGP);
         _extrapolator.InitExtrapolation(allGpDataConverted, null);
-        
+
         InitLoop();
     }
 
@@ -98,8 +99,8 @@ public class MainScript : MonoBehaviour
             return;
 
         loopDuration = Configuration.GetConfig().loopDuration;
-        delayAfterFullLoop = Configuration.GetConfig().delayAfterFullLoop;
-        speedToTCoef = Configuration.GetConfig().speedToTCoef;
+        contemplationDelay = Configuration.GetConfig().contemplationDelay;
+        dataTimeAccelerator = Configuration.GetConfig().dataTimeAccelerator;
         startingBaseSpeed = Configuration.GetConfig().startingBaseSpeed;
         endingBaseSpeed = Configuration.GetConfig().endingBaseSpeed;
         fasterMuskCoef = Configuration.GetConfig().fasterMuskCoef;
@@ -130,17 +131,16 @@ public class MainScript : MonoBehaviour
         {
             // starts future display effects
             _currentState = AppStates.NORMAL_MUSK;
-            accelerationStartDataProgress = _currentDataProgress;
+            muskApparitionTime = _currentIterationTimeForData;
             debugVisual.AddTextToLog("Musk appeared !");
-            Debug.Log("Musk appeared !");
         }
 
-        if (_currentState == AppStates.NORMAL && _hatchedDataVisuals.FirstOrDefault(dv => dv.Data.IsFake) != null)
+        if (_currentState == AppStates.NORMAL_MUSK &&
+            _hatchedDataVisuals.FirstOrDefault(dv => dv.Data.IsFake) != null)
         {
             // starts future display effects
             _currentState = AppStates.FUTURE;
             debugVisual.AddTextToLog("Future");
-            Debug.Log("Future");
         }
 
         if (_currentState == AppStates.FUTURE &&
@@ -151,15 +151,15 @@ public class MainScript : MonoBehaviour
             // contemplate crisis
             _currentState = AppStates.CONTEMPLATION;
             debugVisual.AddTextToLog("Contemplation");
-            Debug.Log("Contemplation");
         }
 
-        if ((Time.time - _lastLoopStart >= loopDuration + delayAfterFullLoop))
+        if ((Time.time - _lastLoopStart >= loopDuration + contemplationDelay) &&
+            _currentState == AppStates.CONTEMPLATION)
         {
             // reset loop
+            resetStartingTime = Time.time;
             _currentState = AppStates.RESET;
             debugVisual.AddTextToLog("Reset");
-            Debug.Log("Reset");
         }
 
         if (_currentState == AppStates.RESET && _hatchedDataVisuals.Count == 0)
@@ -173,6 +173,7 @@ public class MainScript : MonoBehaviour
 
     private void InitLoop()
     {
+        currentSpeed = startingBaseSpeed;
         _lastLoopStart = Time.time;
         _allGpData = (_extrapolator.RetrieveExtrapolation() as IEnumerable<GPData>).ToList();
         LogCounts();
@@ -198,43 +199,53 @@ public class MainScript : MonoBehaviour
         if (_currentState == AppStates.NORMAL)
         {
             ForwardVisual();
+            UpdateVisualPositions();
         }
         else if (_currentState == AppStates.FUTURE || _currentState == AppStates.NORMAL_MUSK)
         {
             AccelerateVisual();
             ForwardVisual();
+            UpdateVisualPositions();
         }
         else if (_currentState == AppStates.CONTEMPLATION)
         {
-            AccelerateVisual();
+            UpdateVisualPositions();
         }
         else if (_currentState == AppStates.RESET)
         {
+            EaseInSlowingVisual();
             ReturnSomeVisualsToPool();
         }
         else
             throw new Exception("Unknown state");
 
-        UpdateVisualPositions();
-        //SendOscBangs();
+        SendOscBangs();
         UpdateCurrentDataProgress();
         CheckForStateChange();
     }
 
+    private void EaseInSlowingVisual()
+    {
+        currentSpeed *= 0.95f;
+        if (currentSpeed < endingBaseSpeed / 15)
+            currentSpeed = 0;
+    }
+
     private void UpdateCurrentIterationTime()
     {
-        _currentIterationTime = (Time.time - _lastLoopStart) / loopDuration;
-        progressBar.transform.localScale = new Vector3(_currentIterationTime * 1920, 10, 1);
+        _currentIterationTimeForData = (Time.time - _lastLoopStart) / (loopDuration);
+
+        progressBar.transform.localScale = new Vector3(_currentIterationTimeForDebug * 1920, 10, 1);
     }
 
     private void UpdateCurrentDataProgress()
     {
-        _currentDataProgress = 1f - (float)_allGpData.Count / _notYetHatchedDataVisuals.Count;
+        _currentDataProgress = 1f - ((float)_notYetHatchedDataVisuals.Count / (float)_allGpData.Count);
     }
 
     public void ForwardVisual()
     {
-        _latestHatchedDataVisuals = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, _currentIterationTime);
+        _latestHatchedDataVisuals = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, _currentIterationTimeForData);
 
         foreach (var dataVisual in _latestHatchedDataVisuals)
         {
@@ -244,20 +255,23 @@ public class MainScript : MonoBehaviour
 
     public void AccelerateVisual()
     {
-        var accelerationDataProgressRange = 1 - accelerationStartDataProgress;
-        var currentAccelerationDataProgress = _currentDataProgress - accelerationStartDataProgress;
-        var normalizedAccelerationDataProgress = currentAccelerationDataProgress / accelerationDataProgressRange;
-        
-        var coefRange = endingBaseSpeed - startingBaseSpeed;
-        currentSpeedCoef = startingBaseSpeed + (endingBaseSpeed - startingBaseSpeed) * normalizedAccelerationDataProgress;
+        var rangeOfTimeSinceMuskApparition = 1 - muskApparitionTime;
+        var normalizedProgression =
+            (_currentIterationTimeForData - muskApparitionTime) / rangeOfTimeSinceMuskApparition;
+
+        currentSpeed = Mathf.Lerp(startingBaseSpeed, endingBaseSpeed, normalizedProgression);
     }
 
     void ReturnSomeVisualsToPool()
     {
-        var nbOfObjectsToDisappear = Math.Max(_hatchedDataVisuals.Count * disappearingRate,
-            Math.Min(_hatchedDataVisuals.Count, 200));
+        var nbOfObjectsToDisappear = Mathf.Clamp(
+            _hatchedDataVisuals.Count,
+            (float)_allGpData.Count / 500,
+            _hatchedDataVisuals.Count * disappearingRate);
 
-        for (var i = 0; i < nbOfObjectsToDisappear; i++)
+        var currentCount = _hatchedDataVisuals.Count;
+
+        for (var i = 0; i < nbOfObjectsToDisappear || i < currentCount; i++)
         {
             var dataVisual = _hatchedDataVisuals.Dequeue();
             if (dataVisual.Data.IsFake)
@@ -287,19 +301,21 @@ public class MainScript : MonoBehaviour
                            (float)Math.Sqrt(originalX * originalX + originalY * originalY) / (float)Math.Sqrt(2);
 
         float timeOffset = 1 - (0.2f + dataVisual.Data.T * 0.8f) * 10000;
+        var tmpDataTimeAccelerator = dataTimeAccelerator;
 
-        float speedToTCoef = Configuration.GetConfig().speedToTCoef;
         if (dataVisual.Data.ObjectType == ElsetObjectType.MUSK)
         {
-            speedToTCoef *= fasterMuskCoef;
+            tmpDataTimeAccelerator *= fasterMuskCoef;
         }
 
-        float timeSpeed = currentSpeedCoef + (speedToTCoef / 300) * dataVisual.Data.T;
+        float timeSpeed = currentSpeed + ((tmpDataTimeAccelerator) * dataVisual.Data.T);
         float timePosition = (timeElapsed) * timeSpeed;
 
         float x = (float)Math.Cos(timePosition * 2 * Math.PI + timeOffset) * circleSize;
         float y = (float)Math.Sin(timePosition * 2 * Math.PI + timeOffset) * circleSize;
 
+        if (float.IsNaN(x) || float.IsNaN(y))
+            Debug.LogError("NAN");
         dataVisual.Visual.transform.localPosition = visualPosition.localPosition + new Vector3(x, y, 0);
     }
 
@@ -311,9 +327,10 @@ public class MainScript : MonoBehaviour
     private void LogCounts()
     {
         debugVisual.AddTextToLog($"Amount of objects: {_allGpData.Count()}");
-        debugVisual.AddTextToLog($"Amount of Real Musk data: {_allGpData.Count(gpData => !gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
-        debugVisual.AddTextToLog($"Amount of FAKE Musk data: {_allGpData.Count(gpData => gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
+        debugVisual.AddTextToLog(
+            $"Amount of Real Musk data: {_allGpData.Count(gpData => !gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
+        debugVisual.AddTextToLog(
+            $"Amount of FAKE Musk data: {_allGpData.Count(gpData => gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
         debugVisual.AddTextToLog($"Amount of fake data: {_allGpData.Count(gpData => gpData.IsFake)}");
-
     }
 }
