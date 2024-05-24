@@ -19,12 +19,13 @@ public enum AppStates
     NORMAL_MUSK,
     FUTURE,
     CONTEMPLATION,
-    RESET,
+    COLLAPSE,
     END
 }
 
 public class MainScript : MonoBehaviour
 {
+    public Logger logger;
     public VisualPool visualPool;
     public VisualPool accentVisualPool;
     public PureDataConnector pdConnector;
@@ -32,7 +33,6 @@ public class MainScript : MonoBehaviour
     public int[] visualDimension = new int[2] { 1920, 2160 };
     public Transform visualPosition = new RectTransform();
     public GameObject progressBar;
-    public DebugVisual debugVisual;
     public ProgressBar progressBarScript;
 
     private System.Random _rnd = new System.Random();
@@ -48,8 +48,8 @@ public class MainScript : MonoBehaviour
     private float loopDuration = 30;
     private float contemplationDelay = 5;
     private float disappearingRate = 0.08f;
+    private float startingBaseSpeed = 0.01f;
     private float endingBaseSpeed = 0.1f;
-    private float startingBaseSpeed = 0.02f;
     private float fasterMuskCoef = 3f;
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
@@ -124,41 +124,41 @@ public class MainScript : MonoBehaviour
 
     private void CheckForStateChange()
     {
-        DataVisual tmpData;
+        var elapsedTime = Time.time - _lastLoopStart;
         if (_currentState == AppStates.NORMAL && _currentDataLoopTime >= muskApparitionTime)
         {
             _currentState = AppStates.NORMAL_MUSK;
-            debugVisual.AddTextToLog("Musk appeared !");
+            logger.Log("Musk appeared !");
         }
         else if (_currentState == AppStates.NORMAL_MUSK && _currentDataLoopTime >= futureStartingTime)
         {
             _currentState = AppStates.FUTURE;
-            debugVisual.AddTextToLog("Future");
+            logger.Log("Future");
         }
         else if (_currentState == AppStates.FUTURE &&
                  _notYetHatchedDataVisuals.Count == 0 &&
-                 (Time.time - _lastLoopStart) >= loopDuration)
+                 elapsedTime >= loopDuration)
         {
             _currentState = AppStates.CONTEMPLATION;
-            debugVisual.AddTextToLog("Contemplation");
+            logger.Log("Contemplation");
         }
-        else if (Time.time - _lastLoopStart >= loopDuration + contemplationDelay &&
+        else if (elapsedTime >= loopDuration + contemplationDelay &&
                  _currentState == AppStates.CONTEMPLATION)
         {
-            _currentState = AppStates.RESET;
-            debugVisual.AddTextToLog("Reset");
+            _currentState = AppStates.COLLAPSE;
+            logger.Log("Reset");
         }
-        else if (_currentState == AppStates.RESET && _hatchedDataVisuals.Count == 0)
+        else if (_currentState == AppStates.COLLAPSE && _hatchedDataVisuals.Count == 0)
         {
             endStartingTime = Time.time;
             _currentState = AppStates.END;
-            debugVisual.AddTextToLog("End");
+            logger.Log("End");
         }
         else if (_currentState == AppStates.END && Time.time - endStartingTime > endDuration)
         {
             InitLoop();
             _currentState = AppStates.NORMAL;
-            debugVisual.AddTextToLog("Normal");
+            logger.Log("Normal");
         }
     }
 
@@ -171,6 +171,7 @@ public class MainScript : MonoBehaviour
         _hatchedDataVisuals = new Queue<DataVisual>(_allGpData.Count);
         _notYetHatchedDataVisuals = new Queue<DataVisual>(_allGpData.Count);
         SetupTimeCodes();
+        UpdateCurrentIterationTime();
         LoadDataVisuals();
         _extrapolator.InitExtrapolation(_allOrigGpData, null);
     }
@@ -187,8 +188,9 @@ public class MainScript : MonoBehaviour
         if (_eventHatcher == null)
             return;
 
-        UpdateCurrentIterationTime();
         CheckForStateChange();
+        
+        UpdateCurrentIterationTime();
 
         if (_currentState == AppStates.NORMAL)
         {
@@ -205,7 +207,7 @@ public class MainScript : MonoBehaviour
         {
             UpdateVisualPositions();
         }
-        else if (_currentState == AppStates.RESET)
+        else if (_currentState == AppStates.COLLAPSE)
         {
             EaseInSlowingVisual();
             ReturnSomeVisualsToPool();
@@ -303,6 +305,7 @@ public class MainScript : MonoBehaviour
         var originalX = dataVisual.Data.X;
         var originalY = dataVisual.Data.Y;
         var originalT = dataVisual.Data.T;
+        var timeElapsed = Time.time - _lastLoopStart;
 
         var maxCircleRadius = (float)Configuration.GetConfig().maxCircleDiam / 4;
         var minCircleRadius = Configuration.GetConfig().minCircleDiam / 4;
@@ -328,7 +331,7 @@ public class MainScript : MonoBehaviour
         var tmpDataTimeAccelerator = dataVisual.Data.ObjectType == ElsetObjectType.MUSK ? fasterMuskCoef : 1;
         var timeOffset = (dataVisual.Data.T) * 100000;
         var timeSpeed = currentSpeed * tmpDataTimeAccelerator;
-        var timePosition = _currentFullLoopTime * 10 * timeSpeed * normalizedCircleRadius + timeOffset;
+        var timePosition = timeElapsed * timeSpeed * normalizedCircleRadius + timeOffset;
 
         var x = Mathf.Cos(timePosition) * circleRadius;
         var y = Mathf.Sin(timePosition) * circleRadius;
@@ -351,11 +354,11 @@ public class MainScript : MonoBehaviour
 
     private void LogCounts()
     {
-        debugVisual.AddTextToLog($"Amount of objects: {_allGpData.Count()}");
-        debugVisual.AddTextToLog(
+        logger.Log($"Amount of objects: {_allGpData.Count()}");
+        logger.Log(
             $"Amount of Real Musk data: {_allGpData.Count(gpData => !gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
-        debugVisual.AddTextToLog(
+        logger.Log(
             $"Amount of FAKE Musk data: {_allGpData.Count(gpData => gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
-        debugVisual.AddTextToLog($"Amount of fake data: {_allGpData.Count(gpData => gpData.IsFake)}");
+        logger.Log($"Amount of fake data: {_allGpData.Count(gpData => gpData.IsFake)}");
     }
 }

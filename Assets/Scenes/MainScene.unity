@@ -270,7 +270,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 121973112}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -766.3573, y: -352.26, z: 0}
+  m_LocalPosition: {x: -551, y: -296.5, z: 0}
   m_LocalScale: {x: 3.015961, y: 2.7043593, z: 4.261711}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -448,7 +448,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 145700173}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -771, y: -352, z: -0.26285455}
+  m_LocalPosition: {x: -555.6427, y: -296.24, z: -0.26285455}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -531,13 +531,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6be8e11e1e088574594f14812dd7b417, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  logger: {fileID: 1980893234}
   visualPool: {fileID: 2113653719}
   accentVisualPool: {fileID: 1942309948}
   pdConnector: {fileID: 1153421345}
   visualDimension: 8007000070080000
   visualPosition: {fileID: 610759513}
   progressBar: {fileID: 23292095}
-  debugVisual: {fileID: 152876429}
   progressBarScript: {fileID: 23292100}
 --- !u!4 &597425372
 Transform:
@@ -1023,7 +1023,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1459239425}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -774.2, y: -352.2, z: 0}
+  m_LocalPosition: {x: -558.8427, y: -296.44, z: 0}
   m_LocalScale: {x: 2.4332511, y: 2.4332511, z: 2.4332511}
   m_ConstrainProportionsScale: 0
   m_Children: []

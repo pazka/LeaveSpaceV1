@@ -66,6 +66,7 @@ namespace Tools
 
         public void Log(string str)
         {
+            Debug.Log(str);
             logLinesToDump.Enqueue(GetTimeString() + " : " + str);
 
             if (logLines.Count > LineLimit) logLines.Dequeue();

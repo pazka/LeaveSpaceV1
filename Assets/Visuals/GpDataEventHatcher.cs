@@ -35,12 +35,10 @@ namespace Visuals
             if (dataToTrigger.Data.IsFake)
             {
                 dataToTrigger.Visual = accentVisualPool.GetOne();
-                dataToTrigger.Visual.GetComponent<Renderer>().material.SetColor("_Color",accentColor);
             }
             else
             {
                 dataToTrigger.Visual = visualPool.GetOne();
-                dataToTrigger.Visual.GetComponent<Renderer>().material.SetColor("_Color",baseColor);
             }
             
             dataToTrigger.Visual.transform.position = new Vector3(dataToTrigger.Data.X, dataToTrigger.Data.Y, 0);
