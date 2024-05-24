@@ -13,10 +13,10 @@ namespace Tools
         public float scaleX;
         public float scaleY;
         public float loopDuration;
+        public float endDuration;
         public float contemplationDelay;
         public float startingBaseSpeed;
         public float endingBaseSpeed;
-        public float dataTimeAccelerator;
         public float fasterMuskCoef;
         public float disappearingRate;
         public float minCircleDiam;
@@ -35,8 +35,8 @@ namespace Tools
             float scaleY,
             float loopDuration,
             float contemplationDelay,
+            float endDuration,
             float startingBaseSpeed,
-            float dataTimeAccelerator,
             float fasterMuskCoef,
             float disappearingRate,
             float endingBaseSpeed,
@@ -56,8 +56,8 @@ namespace Tools
             this.scaleY = scaleY;
             this.loopDuration = loopDuration;
             this.contemplationDelay = contemplationDelay;
+            this.endDuration = endDuration;
             this.disappearingRate = disappearingRate;
-            this.dataTimeAccelerator = dataTimeAccelerator;
             this.endingBaseSpeed = endingBaseSpeed;
             this.isDev = isDev;
             this.startingBaseSpeed = startingBaseSpeed;

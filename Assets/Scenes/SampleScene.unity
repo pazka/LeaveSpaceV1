@@ -319,7 +319,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 09808711b1957b04aabadcfdff946534, type: 2}
+  - {fileID: -876546973899608171, guid: 9743fb51299a87e42a8ba41c9e927686, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -534,13 +534,6 @@ MonoBehaviour:
   visualPool: {fileID: 2113653719}
   accentVisualPool: {fileID: 1942309948}
   pdConnector: {fileID: 1153421345}
-  loopDuration: 30
-  contemplationDelay: 5
-  disappearingRate: 0.05
-  endingBaseSpeed: 0.001
-  startingBaseSpeed: 0.0002
-  dataTimeAccelerator: 0.00002
-  fasterMuskCoef: 3
   visualDimension: 8007000070080000
   visualPosition: {fileID: 610759513}
   progressBar: {fileID: 23292095}
@@ -1079,7 +1072,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 09808711b1957b04aabadcfdff946534, type: 2}
+  - {fileID: -876546973899608171, guid: 9743fb51299a87e42a8ba41c9e927686, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
