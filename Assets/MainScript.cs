@@ -30,8 +30,8 @@ public class MainScript : MonoBehaviour
     public float loopDuration = 30;
     public float contemplationDelay = 5;
     public float disappearingRate = 0.05f;
-    public float endingBaseSpeed = 0.01f;
-    public float startingBaseSpeed = 0.002f;
+    public float endingBaseSpeed = 0.001f;
+    public float startingBaseSpeed = 0.0002f;
     public float dataTimeAccelerator = 0.00002f;
     public float fasterMuskCoef = 3f;
     private float _lastLoopStart = 0;
@@ -39,19 +39,23 @@ public class MainScript : MonoBehaviour
     public Transform visualPosition = new RectTransform();
     public GameObject progressBar;
     public DebugVisual debugVisual;
+    public ProgressBar progressBarScript;
 
+    private System.Random _rnd = new System.Random();
     private GPDataConverter _converter;
+    private List<GPData> _allOrigGpData;
     private List<GPData> _allGpData;
     private EventHatcher<DataVisual> _eventHatcher;
     private float currentSpeed = 0.7f;
     private float muskApparitionTime = 0f;
     private float resetStartingTime = 0f;
+    private float futureStartingTime = 0f;
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
     private IDataExtrapolator _extrapolator;
     private AppStates _currentState = AppStates.NORMAL;
-    private float _currentIterationTimeForData = 0f;
-    private float _currentIterationTimeForDebug = 0f;
+    private float _currentDataApparitionTime = 0f;
+    private float _currentFullLoopTime = 0f;
     private float _currentDataProgress = 0f;
     private ICollection<DataVisual> _latestHatchedDataVisuals;
 
@@ -76,19 +80,11 @@ public class MainScript : MonoBehaviour
 
         _converter.Init(visualDimension[0], visualDimension[1]);
 
-        var allGpDataConverted = new List<GPData>();
-        var allRawDataConverted = _converter.GetAllData();
-        foreach (var data in allRawDataConverted)
-        {
-            if (data is not GPData gpData)
-                throw new Exception("Data is not of type GPData");
-
-            allGpDataConverted.Add(gpData);
-        }
+        _allOrigGpData = _converter.GetAllData().Cast<GPData>().ToList();
 
         _extrapolator =
             FactoryDataExtrapolator.GetInstance(FactoryDataExtrapolator.AvailableDataExtrapolatorTypes.ALLGP);
-        _extrapolator.InitExtrapolation(allGpDataConverted, null);
+        _extrapolator.InitExtrapolation(_allOrigGpData, null);
 
         InitLoop();
     }
@@ -124,47 +120,44 @@ public class MainScript : MonoBehaviour
         }
     }
 
+    public void SetupTimeCodes()
+    {
+        var firstMuskData = _allGpData.FirstOrDefault(d => d.ObjectType == ElsetObjectType.MUSK);
+        var firstFutureData = _allGpData.FirstOrDefault(d => d.IsFake);
+
+        muskApparitionTime = firstMuskData != null ? firstMuskData.T : 0;
+        futureStartingTime = firstFutureData != null ? firstFutureData.T : 0;
+    }
+
     public void CheckForStateChange()
     {
-        if (_currentState == AppStates.NORMAL &&
-            _hatchedDataVisuals.FirstOrDefault(dv => dv.Data.ObjectType == ElsetObjectType.MUSK) != null)
+        DataVisual tmpData;
+        if (_currentState == AppStates.NORMAL && _currentDataApparitionTime >= muskApparitionTime)
         {
-            // starts future display effects
             _currentState = AppStates.NORMAL_MUSK;
-            muskApparitionTime = _currentIterationTimeForData;
             debugVisual.AddTextToLog("Musk appeared !");
         }
-
-        if (_currentState == AppStates.NORMAL_MUSK &&
-            _hatchedDataVisuals.FirstOrDefault(dv => dv.Data.IsFake) != null)
+        else if (_currentState == AppStates.NORMAL_MUSK && _currentDataApparitionTime >= futureStartingTime)
         {
-            // starts future display effects
             _currentState = AppStates.FUTURE;
             debugVisual.AddTextToLog("Future");
         }
-
-        if (_currentState == AppStates.FUTURE &&
-            _notYetHatchedDataVisuals.Count == 0 &&
-            (Time.time - _lastLoopStart >= loopDuration)
-           )
+        else if (_currentState == AppStates.FUTURE &&
+                 _notYetHatchedDataVisuals.Count == 0 &&
+                 (Time.time - _lastLoopStart) >= loopDuration)
         {
-            // contemplate crisis
             _currentState = AppStates.CONTEMPLATION;
             debugVisual.AddTextToLog("Contemplation");
         }
-
-        if ((Time.time - _lastLoopStart >= loopDuration + contemplationDelay) &&
-            _currentState == AppStates.CONTEMPLATION)
+        else if (Time.time - _lastLoopStart >= loopDuration + contemplationDelay &&
+                 _currentState == AppStates.CONTEMPLATION)
         {
-            // reset loop
             resetStartingTime = Time.time;
             _currentState = AppStates.RESET;
             debugVisual.AddTextToLog("Reset");
         }
-
-        if (_currentState == AppStates.RESET && _hatchedDataVisuals.Count == 0)
+        else if (_currentState == AppStates.RESET && _hatchedDataVisuals.Count == 0)
         {
-            // starts loop
             _currentState = AppStates.NORMAL;
             InitLoop();
             debugVisual.AddTextToLog("Normal");
@@ -177,10 +170,10 @@ public class MainScript : MonoBehaviour
         _lastLoopStart = Time.time;
         _allGpData = (_extrapolator.RetrieveExtrapolation() as IEnumerable<GPData>).ToList();
         LogCounts();
+        SetupTimeCodes();
         LoadDataVisuals();
-        _extrapolator.InitExtrapolation(_allGpData, null);
+        _extrapolator.InitExtrapolation(_allOrigGpData, null);
     }
-
 
     // Update is called once per frame
     public void Update()
@@ -229,13 +222,16 @@ public class MainScript : MonoBehaviour
         currentSpeed *= 0.95f;
         if (currentSpeed < endingBaseSpeed / 15)
             currentSpeed = 0;
+
+        if (currentSpeed != 0)
+            UpdateVisualPositions();
     }
 
     private void UpdateCurrentIterationTime()
     {
-        _currentIterationTimeForData = (Time.time - _lastLoopStart) / (loopDuration);
-
-        progressBar.transform.localScale = new Vector3(_currentIterationTimeForDebug * 1920, 10, 1);
+        _currentDataApparitionTime = (Time.time - _lastLoopStart) / (loopDuration);
+        _currentFullLoopTime = (Time.time - _lastLoopStart) / (loopDuration + contemplationDelay);
+        progressBarScript.SetT(_currentFullLoopTime);
     }
 
     private void UpdateCurrentDataProgress()
@@ -245,7 +241,7 @@ public class MainScript : MonoBehaviour
 
     public void ForwardVisual()
     {
-        _latestHatchedDataVisuals = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, _currentIterationTimeForData);
+        _latestHatchedDataVisuals = _eventHatcher.HatchEvents(_notYetHatchedDataVisuals, _currentDataApparitionTime);
 
         foreach (var dataVisual in _latestHatchedDataVisuals)
         {
@@ -257,7 +253,7 @@ public class MainScript : MonoBehaviour
     {
         var rangeOfTimeSinceMuskApparition = 1 - muskApparitionTime;
         var normalizedProgression =
-            (_currentIterationTimeForData - muskApparitionTime) / rangeOfTimeSinceMuskApparition;
+            (_currentDataApparitionTime - muskApparitionTime) / rangeOfTimeSinceMuskApparition;
 
         currentSpeed = Mathf.Lerp(startingBaseSpeed, endingBaseSpeed, normalizedProgression);
     }
@@ -275,11 +271,15 @@ public class MainScript : MonoBehaviour
         {
             var dataVisual = _hatchedDataVisuals.Dequeue();
             if (dataVisual.Data.IsFake)
+            {
                 accentVisualPool.Return(dataVisual.Visual);
+            }
             else
+            {
                 visualPool.Return(dataVisual.Visual);
-
-            _notYetHatchedDataVisuals.Enqueue(dataVisual);
+            }
+            
+            dataVisual.Data = null;
         }
     }
 
@@ -293,15 +293,32 @@ public class MainScript : MonoBehaviour
 
     private void UpdatePositionFromContext(DataVisual dataVisual)
     {
-        float timeElapsed = Time.time - _lastLoopStart;
+        float timeElapsed = _currentFullLoopTime;
         float originalX = dataVisual.Data.X;
         float originalY = dataVisual.Data.Y;
-        
-        float minCircle = Configuration.GetConfig().minStartingCircleSize;
-        float circleSize = minCircle +
-                           (float)Math.Sqrt(originalX * originalX + originalY * originalY) / (float)Math.Sqrt(2);
+        float originalT = dataVisual.Data.T;
 
-        float timeOffset = 1 - (0.2f + dataVisual.Data.T * 0.8f) * 10000;
+        float maxCircleRadius = (float)Configuration.GetConfig().maxCircleDiam / 4;
+        float minCircleRadius = Configuration.GetConfig().minCircleDiam / 4;
+
+        float circleRadius;
+        float noralizedProgressionForTypeofT;
+
+        if (!dataVisual.Data.IsFake)
+        {
+            noralizedProgressionForTypeofT = originalT / futureStartingTime;
+            circleRadius = Mathf.Lerp(maxCircleRadius, minCircleRadius, noralizedProgressionForTypeofT);
+        }
+        else
+        {
+            var normalizedProgression =
+                (originalT - futureStartingTime) / (1 - futureStartingTime);
+            circleRadius = Mathf.Lerp(0, maxCircleRadius, normalizedProgression);
+        }
+
+        circleRadius += 10 * ((float)_rnd.NextDouble() - 0.5f);
+
+        float timeOffset = (dataVisual.Data.T) * 10000;
         var tmpDataTimeAccelerator = dataTimeAccelerator;
 
         if (dataVisual.Data.ObjectType == ElsetObjectType.MUSK)
@@ -310,10 +327,10 @@ public class MainScript : MonoBehaviour
         }
 
         float timeSpeed = currentSpeed + ((tmpDataTimeAccelerator) * dataVisual.Data.T);
-        float timePosition = (timeElapsed) * timeSpeed;
+        float timePosition = ((timeElapsed + timeOffset) + timeSpeed) * (1 - dataVisual.Data.T);
 
-        float x = (float)Math.Cos(timePosition * 2 * Math.PI + timeOffset) * circleSize;
-        float y = (float)Math.Sin(timePosition * 2 * Math.PI + timeOffset) * circleSize;
+        float x = Mathf.Cos(timePosition) * circleRadius;
+        float y = Mathf.Sin(timePosition) * circleRadius;
 
         if (float.IsNaN(x) || float.IsNaN(y))
             Debug.LogError("NAN");

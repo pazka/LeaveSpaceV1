@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using DataProcessing.Generic;
+using Unity.VisualScripting;
 
 namespace DataProcessing.AllGP
 {
@@ -20,15 +21,15 @@ namespace DataProcessing.AllGP
 
         protected override void SetConcreteDataToExtrapolate(IEnumerable<IData> dataToExtrapolate)
         {
-            if (dataToExtrapolate is IEnumerable<GPData> gpDataToExtrapolate)
+            if (dataToExtrapolate is not IEnumerable<GPData> gpDataToExtrapolate)
             {
-                foreach (var gpData in gpDataToExtrapolate.Where(gp => !gp.IsFake))
-                {
-                    _gpDataToExtrapolate.Add(gpData);
-                }
-            }
-            else
                 throw new System.Exception("Data to extrapolate is not of type GPData");
+            }
+
+            foreach (var data in gpDataToExtrapolate)
+            {
+                _gpDataToExtrapolate.Add(new GPData(data));
+            }
         }
 
         protected override void ExecuteExtrapolation(object parameters)

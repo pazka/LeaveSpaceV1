@@ -15,5 +15,12 @@ namespace DataProcessing.AllGP
             this.ObjectType = elsetObjectType;
             this.IsFake = isFake;
         }
+        
+        public GPData(GPData data) : base(data)
+        {
+            this.RawJson = data.RawJson;
+            this.ObjectType = data.ObjectType;
+            this.IsFake = data.IsFake;
+        }
     }
 }
