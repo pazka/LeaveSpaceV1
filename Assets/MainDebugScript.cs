@@ -17,6 +17,7 @@ public class MainDebugScript : MonoBehaviour
 {
     public VisualPool visualPool;
     public VisualPool accentVisualPool;
+    public DebugVisual debugVisual;
 
     private GPDataConverter _converter;
     private IEnumerable<GPData> _allGpData;
@@ -96,6 +97,13 @@ public class MainDebugScript : MonoBehaviour
         textMeshComponent1.fontStyle =  FontStyle.Bold;
         textMesh2.transform.position = new Vector3(1920, 0, 1);
         textMesh2.SetActive(true);
+        
+        // write amount of objects 
+        debugVisual.AddTextToLog($"Amount of objects: {_allGpData.Count()}");
+        debugVisual.AddTextToLog($"Amount of Real Musk data: {_allGpData.Count(gpData => !gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
+        debugVisual.AddTextToLog($"Amount of FAKE Musk data: {_allGpData.Count(gpData => gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
+        debugVisual.AddTextToLog($"Amount of fake data: {_allGpData.Count(gpData => gpData.IsFake)}");
+        
     }
 
     public void Update()

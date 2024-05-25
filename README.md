@@ -44,9 +44,9 @@ Then we uses those data to place the object and move in around ( the meaning of 
 ### V1
 
 - [] musk apparait rapide ( 3* plus rapide stalittes)
-- [] Musk apparait avec son orbite
+- ✅ Musk apparait avec son orbite
 - [] apprition the fait proportionnelement à T en spiral evers l'intérieur
-- [] apparition musk accélère le visuel
+- ✅ apparition musk accélère le visuel
 - [] apparition musk déclhenche bleuisement
 - ✅ Musk extrapolé  +
 - ✅ 1 musk aparait X débirs apparait

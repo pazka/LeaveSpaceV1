@@ -18,6 +18,7 @@ public class DebugVisual : MonoBehaviour
 
     public void AddTextToLog(string text)
     {
+        Debug.Log(text);
         if (!gameObject.activeSelf)
             return;
         

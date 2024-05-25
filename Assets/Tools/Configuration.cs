@@ -14,11 +14,12 @@ namespace Tools
         public float scaleY;
         public float loopDuration;
         public float delayAfterFullLoop;
-        public float speedCoef;
-        public float speedCoefOfMusk;
+        public float startingSpeedCoef;
+        public float fasterMuskCoef;
         public float baseSpeed;
         public float disappearingRate;
-        public float accelerationRate;
+        public float endingSpeedCoef;
+        public float minStartingCircleSize;
         public bool isDev;
         public float[] baseColor;
         public float[] accentColor;
@@ -33,11 +34,12 @@ namespace Tools
             float scaleY,
             float loopDuration,
             float delayAfterFullLoop,
-            float speedCoef,
-            float speedCoefOfMusk,
+            float startingSpeedCoef,
+            float fasterMuskCoef,
             float baseSpeed,
             float disappearingRate,
-            float accelerationRate,
+            float endingSpeedCoef,
+            float minStartingCircleSize,
             bool isDev,
             float[] baseColor,
             float[] accentColor
@@ -53,10 +55,11 @@ namespace Tools
             this.loopDuration = loopDuration;
             this.delayAfterFullLoop = delayAfterFullLoop;
             this.disappearingRate = disappearingRate;
-            this.accelerationRate = accelerationRate;
+            this.endingSpeedCoef = endingSpeedCoef;
             this.isDev = isDev;
-            this.speedCoef = speedCoef;
-            this.speedCoefOfMusk = speedCoefOfMusk;
+            this.startingSpeedCoef = startingSpeedCoef;
+            this.fasterMuskCoef = fasterMuskCoef;
+            this.minStartingCircleSize = minStartingCircleSize;
             this.baseSpeed = baseSpeed;
             this.baseColor = baseColor;
             this.accentColor = accentColor;

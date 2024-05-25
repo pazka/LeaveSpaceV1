@@ -29,10 +29,10 @@ public class MainScript : MonoBehaviour
     public float loopDuration = 30;
     public float delayAfterFullLoop = 30;
     public float disappearingRate = 0.02f;
-    public float speedCoef = 0.7f;
-    public float speedCoefOfMusk = 1.2f;
+    public float startingSpeedCoef = 0.7f;
+    public float endingSpeedCoef = 1.5f;
+    public float fasterMuskCoef = 3f;
     public float baseSpeed = 0.002f;
-    public float accelerationRate = 1.05f;
     private float _lastLoopStart = 0;
     public int[] visualDimension = new int[2] { 1920, 2160 };
     public Transform visualPosition = new RectTransform();
@@ -42,6 +42,8 @@ public class MainScript : MonoBehaviour
     private GPDataConverter _converter;
     private List<IData> _allGpData;
     private EventHatcher<DataVisual> _eventHatcher;
+    private float currentSpeedCoef = 0.7f;
+    private float accelerationStartDataProgress = 0f;
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
     private IDataExtrapolator _extrapolator;
@@ -54,6 +56,7 @@ public class MainScript : MonoBehaviour
     public void Start()
     {
         SetValueFromConfig();
+        currentSpeedCoef = startingSpeedCoef;
         if (Display.displays.Length > 1)
             Display.displays[1].Activate();
         else
@@ -85,11 +88,11 @@ public class MainScript : MonoBehaviour
 
         loopDuration = Configuration.GetConfig().loopDuration;
         delayAfterFullLoop = Configuration.GetConfig().delayAfterFullLoop;
-        speedCoef = Configuration.GetConfig().speedCoef;
-        speedCoefOfMusk = Configuration.GetConfig().speedCoefOfMusk;
+        startingSpeedCoef = Configuration.GetConfig().startingSpeedCoef;
+        endingSpeedCoef = Configuration.GetConfig().endingSpeedCoef;
+        fasterMuskCoef = Configuration.GetConfig().fasterMuskCoef;
         baseSpeed = Configuration.GetConfig().baseSpeed;
         disappearingRate = Configuration.GetConfig().disappearingRate;
-        accelerationRate = Configuration.GetConfig().accelerationRate;
     }
 
     private void LoadDataVisuals()
@@ -118,15 +121,18 @@ public class MainScript : MonoBehaviour
             }
         }
     }
+
     public void CheckForStateChange()
     {
-        if (_currentState == AppStates.NORMAL && _hatchedDataVisuals.FirstOrDefault(dv => dv.Data.IsFake) != null)
+        if (_currentState == AppStates.NORMAL &&
+            _hatchedDataVisuals.FirstOrDefault(dv => dv.Data.ObjectType == ElsetObjectType.MUSK) != null)
         {
             // starts future display effects
-            _currentState = AppStates.FUTURE;
-            debugVisual.AddTextToLog("Future");
+            _currentState = AppStates.NORMAL_MUSK;
+            accelerationStartDataProgress = _currentDataProgress;
+            debugVisual.AddTextToLog("Musk appeared !");
         }
-        
+
         if (_currentState == AppStates.NORMAL && _hatchedDataVisuals.FirstOrDefault(dv => dv.Data.IsFake) != null)
         {
             // starts future display effects
@@ -158,7 +164,6 @@ public class MainScript : MonoBehaviour
             _lastLoopStart = Time.time;
             debugVisual.AddTextToLog("Normal");
         }
-        
     }
 
 
@@ -197,7 +202,7 @@ public class MainScript : MonoBehaviour
             throw new Exception("Unknown state");
 
         UpdateVisualPositions();
-
+        SendOscBangs();
         UpdateCurrentDataProgress();
         CheckForStateChange();
     }
@@ -221,13 +226,15 @@ public class MainScript : MonoBehaviour
         {
             _hatchedDataVisuals.Enqueue(dataVisual);
         }
-
-        SendOscBangs();
     }
 
     public void AccelerateVisual()
     {
-        speedCoef *= accelerationRate;
+        var accelerationDataProgressRange = 1 - accelerationStartDataProgress;
+        var currentAccelerationDataProgress = _currentDataProgress - accelerationStartDataProgress;
+        var normalizedAccelerationDataProgress = currentAccelerationDataProgress / accelerationDataProgressRange;
+        
+        currentSpeedCoef = (endingSpeedCoef - startingSpeedCoef) * normalizedAccelerationDataProgress;
     }
 
     void ReturnVisualsToPool()
@@ -252,13 +259,12 @@ public class MainScript : MonoBehaviour
         ReturnVisualsToPool();
     }
 
-
     private void UpdateVisualPositions()
     {
         float timeElapsed = Time.time - _lastLoopStart;
         foreach (var dataVisual in _hatchedDataVisuals)
         {
-            dataVisual.UpdatePositionFromContext(timeElapsed, visualPosition);
+            dataVisual.UpdatePositionFromContext(timeElapsed, visualPosition, currentSpeedCoef, fasterMuskCoef);
         }
     }
 

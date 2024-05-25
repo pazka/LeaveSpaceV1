@@ -42,8 +42,8 @@ namespace DataProcessing.AllGP
             var muskApparitionCoefs = new float[coefSlicingAmount];
             var xAvgForEachCoef = new float[coefSlicingAmount];
             var yAvgForEachCoef = new float[coefSlicingAmount];
-            var aggravationAmount = 1.2f;
             var nbOfDebrisForEachFutureMusk = 5;
+            var nbMuskToCreate = 40000;
 
             //fill the coefs with amount of launch between the first lauch of a DATA.ElstObjectType.MUSK and the last one
             var firstTofMuskLaunchT = _gpDataToExtrapolate.First(gpData => gpData.ObjectType == ElsetObjectType.MUSK).T;
@@ -75,30 +75,32 @@ namespace DataProcessing.AllGP
                 _extrapolatedData.Add(gpData);
             }
 
+            var random = new System.Random();
+
             // add fake future data with the same pattern as the real apparitions
             for (int i = 0; i < coefSlicingAmount; i++)
             {
-                var amountToCreate = (int)(muskApparitionCoefs[i]);
-                var timeSliceForEachAmount = timeSlice / amountToCreate;
+                var amountToCreate = nbMuskToCreate / timeSlice;
 
                 //add musk in a linear way between for each time slice
                 for (int j = 0; j < amountToCreate; j++)
                 {
                     var newX = xAvgForEachCoef[i] + j;
                     var newY = yAvgForEachCoef[i] + j;
-                    var newT = 1 + i * timeSlice + j * timeSliceForEachAmount * j;
+                    var newT = 1 + i * timeSlice + timeSlice * (float)(random.NextDouble() * 0.4 - 0.2f);
+
                     var newGPData = new GPData(null, newX, newY, newT, ElsetObjectType.MUSK, true);
                     _extrapolatedData.Add(newGPData);
 
                     //add debris for each musks
                     for (int k = 0; k < nbOfDebrisForEachFutureMusk; k++)
                     {
-                        var random = new System.Random();
                         var amountDeviationX = 10 * (float)(random.NextDouble() - 0.5f);
-                        var amountDeviationY = 10 * (float)(random.NextDouble() - 0.5f);
-                        
-                        var newDebrisT = newT + k * timeSliceForEachAmount;
-                        var newDebris = new GPData(null, newX - amountDeviationX, newY - amountDeviationY, newDebrisT, ElsetObjectType.DEBRIS_OTHER,
+                        var amountDeviationY = 15 * (float)(random.NextDouble() - 0.5f);
+
+                        var newDebrisT = newT + k * timeSlice;
+                        var newDebris = new GPData(null, 0, newY - amountDeviationY, newDebrisT,
+                            ElsetObjectType.DEBRIS_OTHER,
                             true);
                         _extrapolatedData.Add(newDebris);
                     }
