@@ -49,7 +49,7 @@ public class MainScript : MonoBehaviour
     private float contemplationDelay = 5;
     private float disappearingRate = 0.08f;
     private float startingBaseSpeed = 0.01f;
-    private float endingBaseSpeed = 0.1f;
+    private float endingBaseSpeed = 0.03f;
     private float fasterMuskCoef = 3f;
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
@@ -120,6 +120,9 @@ public class MainScript : MonoBehaviour
 
         muskApparitionTime = firstMuskData?.T ?? 0;
         futureStartingTime = firstFutureData?.T ?? 0;
+        
+        logger.Log($"TIMECODE : Musk apparition time : {muskApparitionTime}");
+        logger.Log($"TIMECODE : Future starting time : {futureStartingTime}");
     }
 
     private void CheckForStateChange()
@@ -128,37 +131,37 @@ public class MainScript : MonoBehaviour
         if (_currentState == AppStates.NORMAL && _currentDataLoopTime >= muskApparitionTime)
         {
             _currentState = AppStates.NORMAL_MUSK;
-            logger.Log("Musk appeared !");
+            logger.Log($"Musk : {_currentDataLoopTime} / {_currentFullLoopTime}");
         }
         else if (_currentState == AppStates.NORMAL_MUSK && _currentDataLoopTime >= futureStartingTime)
         {
             _currentState = AppStates.FUTURE;
-            logger.Log("Future");
+            logger.Log($"Future : {_currentDataLoopTime} / {_currentFullLoopTime}");
         }
         else if (_currentState == AppStates.FUTURE &&
                  _notYetHatchedDataVisuals.Count == 0 &&
                  elapsedTime >= loopDuration)
         {
             _currentState = AppStates.CONTEMPLATION;
-            logger.Log("Contemplation");
+            logger.Log($"Contemplation : {_currentDataLoopTime} / {_currentFullLoopTime}");
         }
         else if (elapsedTime >= loopDuration + contemplationDelay &&
                  _currentState == AppStates.CONTEMPLATION)
         {
             _currentState = AppStates.COLLAPSE;
-            logger.Log("Reset");
+            logger.Log($"Collapse : {_currentDataLoopTime} / {_currentFullLoopTime}");
         }
         else if (_currentState == AppStates.COLLAPSE && _hatchedDataVisuals.Count == 0)
         {
             endStartingTime = Time.time;
             _currentState = AppStates.END;
-            logger.Log("End");
+            logger.Log($"End : {_currentDataLoopTime} / {_currentFullLoopTime}");
         }
         else if (_currentState == AppStates.END && Time.time - endStartingTime > endDuration)
         {
             InitLoop();
             _currentState = AppStates.NORMAL;
-            logger.Log("Normal");
+            logger.Log("Normal : " + _currentDataLoopTime);
         }
     }
 
@@ -189,7 +192,6 @@ public class MainScript : MonoBehaviour
             return;
 
         CheckForStateChange();
-        
         UpdateCurrentIterationTime();
 
         if (_currentState == AppStates.NORMAL)
@@ -197,7 +199,7 @@ public class MainScript : MonoBehaviour
             ForwardVisual();
             UpdateVisualPositions();
         }
-        else if (_currentState == AppStates.FUTURE || _currentState == AppStates.NORMAL_MUSK)
+        else if (_currentState == AppStates.NORMAL_MUSK || _currentState == AppStates.FUTURE )
         {
             AccelerateVisual();
             ForwardVisual();
@@ -219,12 +221,8 @@ public class MainScript : MonoBehaviour
 
     private void EaseInSlowingVisual()
     {
-        currentSpeed *= 0.95f;
-        if (currentSpeed < endingBaseSpeed / 15)
-            currentSpeed = 0;
-
-        if (currentSpeed != 0)
-            UpdateVisualPositions();
+        currentSpeed *= 0.90f;
+        UpdateVisualPositions();
     }
 
     private void UpdateCurrentIterationTime()

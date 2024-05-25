@@ -51,8 +51,3 @@ Then we uses those data to place the object and move in around ( the meaning of 
 - ✅ Musk extrapolated
 - ✅ 1 musk aparait -> increase chance of debris apparition 
 - ✅ debris apparait -> increase chance of debris apparition
-  
-# Requirement aditionnal
-
-- 1 dot must be a sincere ovni
-- Make apparition and disparition of satelites
