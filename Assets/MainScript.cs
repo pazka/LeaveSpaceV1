@@ -42,14 +42,15 @@ public class MainScript : MonoBehaviour
     private EventHatcher<DataVisual> _eventHatcher;
     private float currentSpeed;
     private float muskApparitionTime;
-    private float endStartingTime;
     private float futureStartingTime;
+    private float collapseStartingTime;
+    private float endStartingTime;
     private float endDuration;
     private float loopDuration = 30;
     private float contemplationDelay = 5;
-    private float disappearingRate = 0.08f;
+    private float disappearingRate = 0.02f;
     private float startingBaseSpeed = 0.01f;
-    private float endingBaseSpeed = 0.03f;
+    private float endingBaseSpeed = 0.02f;
     private float fasterMuskCoef = 3f;
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
@@ -120,7 +121,7 @@ public class MainScript : MonoBehaviour
 
         muskApparitionTime = firstMuskData?.T ?? 0;
         futureStartingTime = firstFutureData?.T ?? 0;
-        
+
         logger.Log($"TIMECODE : Musk apparition time : {muskApparitionTime}");
         logger.Log($"TIMECODE : Future starting time : {futureStartingTime}");
     }
@@ -148,6 +149,7 @@ public class MainScript : MonoBehaviour
         else if (elapsedTime >= loopDuration + contemplationDelay &&
                  _currentState == AppStates.CONTEMPLATION)
         {
+            collapseStartingTime = Time.time;
             _currentState = AppStates.COLLAPSE;
             logger.Log($"Collapse : {_currentDataLoopTime} / {_currentFullLoopTime}");
         }
@@ -192,14 +194,13 @@ public class MainScript : MonoBehaviour
             return;
 
         CheckForStateChange();
-        UpdateCurrentIterationTime();
 
         if (_currentState == AppStates.NORMAL)
         {
             ForwardVisual();
             UpdateVisualPositions();
         }
-        else if (_currentState == AppStates.NORMAL_MUSK || _currentState == AppStates.FUTURE )
+        else if (_currentState == AppStates.NORMAL_MUSK || _currentState == AppStates.FUTURE)
         {
             AccelerateVisual();
             ForwardVisual();
@@ -214,9 +215,10 @@ public class MainScript : MonoBehaviour
             EaseInSlowingVisual();
             ReturnSomeVisualsToPool();
         }
-
-        SendOscBangs();
+        
         UpdateCurrentDataProgress();
+        UpdateCurrentIterationTime();
+        SendOscBangs();
     }
 
     private void EaseInSlowingVisual()
@@ -263,11 +265,14 @@ public class MainScript : MonoBehaviour
 
         var currentCount = _hatchedDataVisuals.Count;
         var disappearEverything = currentCount <= 300;
+        var fasterDisappear = currentCount <= 10000;
 
+        var removeCoef = fasterDisappear ? 0.05f : disappearingRate;
+        
         for (var i = 0; i < currentCount; i++)
         {
             var dataVisual = _hatchedDataVisuals.Dequeue();
-            if (!disappearEverything && (rnd.NextDouble() > disappearingRate))
+            if (!disappearEverything && (rnd.NextDouble() > removeCoef))
             {
                 tmpQueue.Enqueue(dataVisual);
             }
@@ -329,8 +334,13 @@ public class MainScript : MonoBehaviour
         var tmpDataTimeAccelerator = dataVisual.Data.ObjectType == ElsetObjectType.MUSK ? fasterMuskCoef : 1;
         var timeOffset = (dataVisual.Data.T) * 100000;
         var timeSpeed = currentSpeed * tmpDataTimeAccelerator;
-        var timePosition = timeElapsed * timeSpeed * normalizedCircleRadius + timeOffset;
-
+        var timePosition = timeOffset + timeElapsed * timeSpeed * normalizedCircleRadius;
+        if(_currentState == AppStates.COLLAPSE)
+        {
+            timeElapsed = Time.time - collapseStartingTime;
+            timePosition = collapseStartingTime + timeOffset + timeElapsed * timeSpeed * normalizedCircleRadius;
+        }
+        
         var x = Mathf.Cos(timePosition) * circleRadius;
         var y = Mathf.Sin(timePosition) * circleRadius;
 
@@ -347,7 +357,17 @@ public class MainScript : MonoBehaviour
 
     private void SendOscBangs()
     {
-        pdConnector.SendOscMessage("/data_clock", _currentDataProgress);
+        if (_currentDataLoopTime < 0.99f)
+        {
+            pdConnector.SendOscMessage("/data_clock", _currentDataLoopTime);
+        }else if (_currentState == AppStates.COLLAPSE)
+        {
+            pdConnector.SendOscMessage("/data_clock", 0.99f);
+        }
+        else if (_currentState == AppStates.CONTEMPLATION)
+        {
+            pdConnector.SendOscMessage("/data_clock", 0.100f);
+        }
     }
 
     private void LogCounts()
