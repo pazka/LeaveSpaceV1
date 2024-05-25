@@ -1,4 +1,4 @@
-#N canvas 140 25 685 657 12;
+#N canvas 621 84 685 657 12;
 #N canvas 129 31 838 723 effacement 0;
 #X obj 134 60 env~;
 #X floatatom 134 84 5 0 0 0 - - - 0;
@@ -1327,7 +1327,7 @@
 #X obj 432 335 r clock;
 #X obj 432 432 r clock;
 #X obj 431 532 r clock;
-#X text 67 538 effondrement se declenche à 99% et le 100% reste bloqué pendant 30s de part l'envoi de valeurs de la visualisation;
+#X text 20 535 effondrement se declenche à 99% et le 100% reste bloqué pendant 30s de part l'envoi de valeurs de la visualisation;
 #X connect 4 0 3 0;
 #X connect 7 0 4 0;
 #X connect 8 0 13 0;
