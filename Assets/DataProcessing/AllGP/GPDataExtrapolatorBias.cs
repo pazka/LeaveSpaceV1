@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using DataProcessing.Generic;
+using Unity.VisualScripting;
 
 namespace DataProcessing.AllGP
 {
@@ -20,15 +21,15 @@ namespace DataProcessing.AllGP
 
         protected override void SetConcreteDataToExtrapolate(IEnumerable<IData> dataToExtrapolate)
         {
-            if (dataToExtrapolate is IEnumerable<GPData> gpDataToExtrapolate)
+            if (dataToExtrapolate is not IEnumerable<GPData> gpDataToExtrapolate)
             {
-                foreach (var gpData in gpDataToExtrapolate)
-                {
-                    _gpDataToExtrapolate.Add(gpData);
-                }
-            }
-            else
                 throw new System.Exception("Data to extrapolate is not of type GPData");
+            }
+
+            foreach (var data in gpDataToExtrapolate)
+            {
+                _gpDataToExtrapolate.Add(new GPData(data));
+            }
         }
 
         protected override void ExecuteExtrapolation(object parameters)
@@ -37,13 +38,15 @@ namespace DataProcessing.AllGP
             //T 100 = year 2023
 
             //slice the time between the first Musk launch and the last one into 100 segments and extrapolate the data to 2100
-            var yearToTarget = 2050;
-            var coefSlicingAmount = 100;
-            var muskApparitionCoefs = new float[coefSlicingAmount];
-            var xAvgForEachCoef = new float[coefSlicingAmount];
-            var yAvgForEachCoef = new float[coefSlicingAmount];
-            var nbOfDebrisForEachFutureMusk = 5;
-            var nbMuskToCreate = 40000;
+            const int yearToTarget = 2050;
+            const int futureTimeSlicingAmount = 100;
+            const int nbMuskToCreate = 40000;
+            var muskApparitionCoefs = new float[futureTimeSlicingAmount];
+            var xAvgForEachCoef = new float[futureTimeSlicingAmount];
+            var yAvgForEachCoef = new float[futureTimeSlicingAmount];
+            var createdFutureMusk = 0;
+            var nbDebrisToCreateForEachFutureMusk = 100;
+            var prctageDebrisToCreateForEachFutureMuskAggravation = 1.085f;
 
             //fill the coefs with amount of launch between the first lauch of a DATA.ElstObjectType.MUSK and the last one
             var firstTofMuskLaunchT = _gpDataToExtrapolate.First(gpData => gpData.ObjectType == ElsetObjectType.MUSK).T;
@@ -52,11 +55,11 @@ namespace DataProcessing.AllGP
 
             _extrapolatedData = new List<GPData>();
 
-            for (int i = 0; i < coefSlicingAmount; i++)
+            for (int i = 0; i < futureTimeSlicingAmount; i++)
             {
                 var data = _gpDataToExtrapolate.Where(gpData =>
-                    gpData.T >= firstTofMuskLaunchT + i * tRangeOfMuskApparition / coefSlicingAmount &&
-                    gpData.T < firstTofMuskLaunchT + (i + 1) * tRangeOfMuskApparition / coefSlicingAmount);
+                    gpData.T >= firstTofMuskLaunchT + i * tRangeOfMuskApparition / futureTimeSlicingAmount &&
+                    gpData.T < firstTofMuskLaunchT + (i + 1) * tRangeOfMuskApparition / futureTimeSlicingAmount);
 
                 var gpDatas = data as GPData[] ?? data.ToArray();
                 muskApparitionCoefs[i] = gpDatas.Count();
@@ -68,7 +71,7 @@ namespace DataProcessing.AllGP
 
             // Now find the T that corresponds to the year  yearToTarget
             var timeToTarget = (yearToTarget - 1957f) / (2023f - 1957f);
-            var timeSlice = (timeToTarget - 1) / coefSlicingAmount;
+            var timeSlice = (timeToTarget - 1) / futureTimeSlicingAmount;
 
             foreach (var gpData in _gpDataToExtrapolate)
             {
@@ -76,34 +79,60 @@ namespace DataProcessing.AllGP
             }
 
             var random = new System.Random();
+            var amountToCreate = nbMuskToCreate / futureTimeSlicingAmount;
 
             // add fake future data with the same pattern as the real apparitions
-            for (int i = 0; i < coefSlicingAmount; i++)
+            for (var futureTimeSliceIndex = 0; futureTimeSliceIndex < futureTimeSlicingAmount; futureTimeSliceIndex++)
             {
-                var amountToCreate = nbMuskToCreate / timeSlice;
-
                 //add musk in a linear way between for each time slice
-                for (int j = 0; j < amountToCreate; j++)
+                for (var j = 0; j < amountToCreate; j++)
                 {
-                    var newX = xAvgForEachCoef[i] + j;
-                    var newY = yAvgForEachCoef[i] + j;
-                    var newT = 1 + i * timeSlice + timeSlice * (float)(random.NextDouble() * 0.4 - 0.2f);
+                    var newX = xAvgForEachCoef[futureTimeSliceIndex];
+                    var newY = yAvgForEachCoef[futureTimeSliceIndex];
+                    var newT = 1 + futureTimeSliceIndex * timeSlice;
 
-                    var newGPData = new GPData(null, newX, newY, newT, ElsetObjectType.MUSK, true);
-                    _extrapolatedData.Add(newGPData);
+                    var amountDeviationX = 400 * (float)(random.NextDouble() - 0.5f);
+                    var amountDeviationY = 400 * (float)(random.NextDouble() - 0.5f);
+                    var amountDeviationT = timeSlice * (float)(random.NextDouble() * 0.4 - 0.2f);
 
-                    //add debris for each musks
-                    for (int k = 0; k < nbOfDebrisForEachFutureMusk; k++)
+                    var newGpData = new GPData(null,
+                        newX + amountDeviationX,
+                        newY + amountDeviationY,
+                        newT + amountDeviationT,
+                        ElsetObjectType.MUSK, true);
+                    _extrapolatedData.Add(newGpData);
+                    createdFutureMusk++;
+                }
+
+                //add debris for each musks groups if probability is met
+                var criteria = (createdFutureMusk / (float)nbMuskToCreate);
+                var bias = 0.2f;
+                criteria = bias + criteria * criteria * (1 - bias);
+
+                if (random.NextDouble() < (criteria))
+                {
+                    var newX = xAvgForEachCoef[futureTimeSliceIndex];
+                    var newY = yAvgForEachCoef[futureTimeSliceIndex];
+                    var newT = 1 + futureTimeSliceIndex * timeSlice;
+
+                    for (var k = 0; k < nbDebrisToCreateForEachFutureMusk; k++)
                     {
-                        var amountDeviationX = 10 * (float)(random.NextDouble() - 0.5f);
-                        var amountDeviationY = 15 * (float)(random.NextDouble() - 0.5f);
+                        var amountDeviationX = 400 * (float)(random.NextDouble() - 0.5f);
+                        var amountDeviationY = 400 * (float)(random.NextDouble() - 0.5f);
+                        var amountDeviationT = timeSlice * (float)random.NextDouble() * 5f;
 
-                        var newDebrisT = newT + k * timeSlice;
-                        var newDebris = new GPData(null, 0, newY - amountDeviationY, newDebrisT,
+                        var newDebris = new GPData(
+                            null,
+                            newX + amountDeviationX,
+                            newY + amountDeviationY,
+                            newT + amountDeviationT,
                             ElsetObjectType.DEBRIS_OTHER,
                             true);
                         _extrapolatedData.Add(newDebris);
                     }
+
+                    nbDebrisToCreateForEachFutureMusk = (int)Math.Ceiling(nbDebrisToCreateForEachFutureMusk *
+                                                                          prctageDebrisToCreateForEachFutureMuskAggravation);
                 }
             }
 

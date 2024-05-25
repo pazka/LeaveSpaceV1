@@ -16,7 +16,7 @@ namespace Visuals
             this.visualPool = visualPool;
             this.accentVisualPool = accentVisualPool;
             visualPool.PreloadNObjects(34000);
-            accentVisualPool.PreloadNObjects(20000);
+            accentVisualPool.PreloadNObjects(120000);
             
             float[] newBaseColor = Configuration.GetConfig().baseColor;
             float[] newAccentColor = Configuration.GetConfig().accentColor;
@@ -34,14 +34,11 @@ namespace Visuals
             
             if (dataToTrigger.Data.IsFake)
             {
-                dataToTrigger.Type = "accent";
                 dataToTrigger.Visual = accentVisualPool.GetOne();
-                dataToTrigger.Visual.GetComponent<Renderer>().material.SetColor("_Color",accentColor);
             }
             else
             {
                 dataToTrigger.Visual = visualPool.GetOne();
-                dataToTrigger.Visual.GetComponent<Renderer>().material.SetColor("_Color",baseColor);
             }
             
             dataToTrigger.Visual.transform.position = new Vector3(dataToTrigger.Data.X, dataToTrigger.Data.Y, 0);

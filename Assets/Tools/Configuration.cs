@@ -13,13 +13,14 @@ namespace Tools
         public float scaleX;
         public float scaleY;
         public float loopDuration;
-        public float delayAfterFullLoop;
-        public float startingSpeedCoef;
+        public float endDuration;
+        public float contemplationDelay;
+        public float startingBaseSpeed;
+        public float endingBaseSpeed;
         public float fasterMuskCoef;
-        public float baseSpeed;
         public float disappearingRate;
-        public float endingSpeedCoef;
-        public float minStartingCircleSize;
+        public float minCircleDiam;
+        public float maxCircleDiam;
         public bool isDev;
         public float[] baseColor;
         public float[] accentColor;
@@ -33,13 +34,14 @@ namespace Tools
             float scaleX,
             float scaleY,
             float loopDuration,
-            float delayAfterFullLoop,
-            float startingSpeedCoef,
+            float contemplationDelay,
+            float endDuration,
+            float startingBaseSpeed,
             float fasterMuskCoef,
-            float baseSpeed,
             float disappearingRate,
-            float endingSpeedCoef,
-            float minStartingCircleSize,
+            float endingBaseSpeed,
+            float minCircleDiam,
+            float maxCircleDiam,
             bool isDev,
             float[] baseColor,
             float[] accentColor
@@ -53,14 +55,15 @@ namespace Tools
             this.scaleX = scaleX;
             this.scaleY = scaleY;
             this.loopDuration = loopDuration;
-            this.delayAfterFullLoop = delayAfterFullLoop;
+            this.contemplationDelay = contemplationDelay;
+            this.endDuration = endDuration;
             this.disappearingRate = disappearingRate;
-            this.endingSpeedCoef = endingSpeedCoef;
+            this.endingBaseSpeed = endingBaseSpeed;
             this.isDev = isDev;
-            this.startingSpeedCoef = startingSpeedCoef;
+            this.startingBaseSpeed = startingBaseSpeed;
             this.fasterMuskCoef = fasterMuskCoef;
-            this.minStartingCircleSize = minStartingCircleSize;
-            this.baseSpeed = baseSpeed;
+            this.minCircleDiam = minCircleDiam;
+            this.maxCircleDiam = maxCircleDiam;
             this.baseColor = baseColor;
             this.accentColor = accentColor;
         }

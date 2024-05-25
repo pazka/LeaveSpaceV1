@@ -43,13 +43,14 @@ Then we uses those data to place the object and move in around ( the meaning of 
 
 ### V1
 
-- [] musk apparait rapide ( 3* plus rapide stalittes)
+- ✅ musk apparait rapide ( 3* plus rapide stalittes)
+- ✅ apprition the fait proportionnelement à T en spiral evers l'intérieur
+- ✅ apparition musk déclhenche bleuisement
 - ✅ Musk apparait avec son orbite
-- [] apprition the fait proportionnelement à T en spiral evers l'intérieur
 - ✅ apparition musk accélère le visuel
-- [] apparition musk déclhenche bleuisement
-- ✅ Musk extrapolé  +
-- ✅ 1 musk aparait X débirs apparait
+- ✅ Musk extrapolated
+- ✅ 1 musk aparait -> increase chance of debris apparition 
+- ✅ debris apparait -> increase chance of debris apparition
   
 # Requirement aditionnal
 

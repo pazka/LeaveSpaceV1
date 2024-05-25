@@ -10,6 +10,7 @@ namespace SoundProcessing
         public Logger logger;
         private JsonConfiguration config;
         private OSC osc;
+        private bool connected = false;
 
         private void Start()
         {

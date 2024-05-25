@@ -32,6 +32,15 @@ namespace DataProcessing.Generic
         /// </summary>
         public float Y { get; protected set; }
 
+        public Data(Data data)
+        {
+            this.Raw = data.Raw;
+            this.RawX = data.RawX;
+            this.RawY = data.RawY;
+            this.X = data.X;
+            this.Y = data.Y;
+        }
+        
         public Data(float x, float y)
         {
             this.RawX = x;

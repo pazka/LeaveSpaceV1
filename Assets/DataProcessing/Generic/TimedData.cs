@@ -12,12 +12,14 @@ namespace DataProcessing.Generic
     {
         public float RawT { get; private set;}
         public float T { get; protected set;}
-
-        public TimedData(string raw, float x, float y) : base(raw, x, y)
+        
+        public TimedData(TimedData data) : base(data)
         {
+            this.RawT = data.RawT;
+            this.T = data.T;
         }
 
-        public TimedData(string raw, float x, float y, float t) : this(raw, x, y)
+        public TimedData(string raw, float x, float y, float t) : base(raw, x, y)
         {
             this.RawT = t;
             this.T = t;
