@@ -50,7 +50,7 @@ public class MainScript : MonoBehaviour
     private float contemplationDelay = 5;
     private float disappearingRate = 0.02f;
     private float startingBaseSpeed = 0.01f;
-    private float endingBaseSpeed = 0.02f;
+    private float endingBaseSpeed = 0.05f;
     private float fasterMuskCoef = 3f;
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
@@ -102,16 +102,6 @@ public class MainScript : MonoBehaviour
         startingBaseSpeed = Configuration.GetConfig().startingBaseSpeed;
         disappearingRate = Configuration.GetConfig().disappearingRate;
         endDuration = Configuration.GetConfig().endDuration;
-    }
-
-    private void LoadDataVisuals()
-    {
-        foreach (var data in _allGpData.Select(t => t as GPData))
-        {
-            _notYetHatchedDataVisuals.Enqueue(data.IsFake
-                ? new DataVisual(data, accentVisualPool.GetOne())
-                : new DataVisual(data, visualPool.GetOne()));
-        }
     }
 
     private void SetupTimeCodes()
@@ -172,12 +162,17 @@ public class MainScript : MonoBehaviour
         currentSpeed = startingBaseSpeed;
         _lastLoopStart = Time.time;
         _allGpData = (_extrapolator.RetrieveExtrapolation() as IEnumerable<GPData>).ToList();
-        LogCounts();
         _hatchedDataVisuals = new Queue<DataVisual>(_allGpData.Count);
         _notYetHatchedDataVisuals = new Queue<DataVisual>(_allGpData.Count);
+        foreach (var data in _allGpData.Select(t => t as GPData))
+        {
+            _notYetHatchedDataVisuals.Enqueue(DataVisual.IsDataAccent(data)
+                ? new DataVisual(data, accentVisualPool.GetOne())
+                : new DataVisual(data, visualPool.GetOne()));
+        }
+        LogCounts();
         SetupTimeCodes();
         UpdateCurrentIterationTime();
-        LoadDataVisuals();
         _extrapolator.InitExtrapolation(_allOrigGpData, null);
     }
 
@@ -212,19 +207,13 @@ public class MainScript : MonoBehaviour
         }
         else if (_currentState == AppStates.COLLAPSE)
         {
-            EaseInSlowingVisual();
             ReturnSomeVisualsToPool();
+            EaseInSlowingVisual();
         }
-        
+
         UpdateCurrentDataProgress();
         UpdateCurrentIterationTime();
         SendOscBangs();
-    }
-
-    private void EaseInSlowingVisual()
-    {
-        currentSpeed *= 0.90f;
-        UpdateVisualPositions();
     }
 
     private void UpdateCurrentIterationTime()
@@ -258,6 +247,13 @@ public class MainScript : MonoBehaviour
         currentSpeed = Mathf.Lerp(startingBaseSpeed, endingBaseSpeed, normalizedProgression);
     }
 
+    private void EaseInSlowingVisual()
+    {
+        var returningProgress = _hatchedDataVisuals.Count / (float)_allGpData.Count;
+        currentSpeed = endingBaseSpeed * returningProgress;
+        UpdateVisualPositions();
+    }
+
     private void ReturnSomeVisualsToPool()
     {
         var rnd = new System.Random();
@@ -268,7 +264,7 @@ public class MainScript : MonoBehaviour
         var fasterDisappear = currentCount <= 10000;
 
         var removeCoef = fasterDisappear ? 0.05f : disappearingRate;
-        
+
         for (var i = 0; i < currentCount; i++)
         {
             var dataVisual = _hatchedDataVisuals.Dequeue();
@@ -278,13 +274,13 @@ public class MainScript : MonoBehaviour
             }
             else
             {
-                dataVisual.Visual.GetComponent<Renderer>().material.SetFloat("_Clock", 0);
-                if (dataVisual.Data.IsFake)
+                if (dataVisual.IsAccentVisual)
                 {
                     accentVisualPool.Return(dataVisual.Visual);
                 }
                 else
                 {
+                    dataVisual.RenderRef.material.SetFloat("_Clock", 0);
                     visualPool.Return(dataVisual.Visual);
                 }
 
@@ -303,55 +299,67 @@ public class MainScript : MonoBehaviour
         }
     }
 
-    private void UpdatePositionFromContext(DataVisual dataVisual)
+    private void AssignCirclePosY(DataVisual dataVisual)
     {
-        var originalX = dataVisual.Data.X;
-        var originalY = dataVisual.Data.Y;
-        var originalT = dataVisual.Data.T;
-        var timeElapsed = Time.time - _lastLoopStart;
+        if (dataVisual.CircleY < 0)
+        {
+            return;
+        }
 
         var maxCircleRadius = (float)Configuration.GetConfig().maxCircleDiam / 4;
         var minCircleRadius = Configuration.GetConfig().minCircleDiam / 4;
 
-        float circleRadius;
-        var currentFutureprogression = (_currentDataLoopTime - futureStartingTime) / (1 - futureStartingTime);
-
+        float circlePosY;
         if (!dataVisual.Data.IsFake)
         {
-            var normalizedProgressionForTypeofT = originalT / futureStartingTime;
-            circleRadius = Mathf.Lerp(maxCircleRadius, minCircleRadius, normalizedProgressionForTypeofT);
+            var normalizedProgressionForTypeofT = dataVisual.Data.T / futureStartingTime;
+            circlePosY = Mathf.Lerp(maxCircleRadius, minCircleRadius, normalizedProgressionForTypeofT);
         }
         else
         {
             var apparitionOnFutureProgressScale =
-                (originalT - futureStartingTime) / (1 - futureStartingTime);
-            circleRadius = Mathf.Lerp(0, maxCircleRadius, apparitionOnFutureProgressScale);
+                (dataVisual.Data.T - futureStartingTime) / (1 - futureStartingTime);
+            circlePosY = Mathf.Lerp(0, maxCircleRadius, apparitionOnFutureProgressScale);
         }
 
-        circleRadius += 10 * ((float)dataVisual.Random - 0.5f);
-        var normalizedCircleRadius = circleRadius / maxCircleRadius;
+        circlePosY += 10 * ((float)dataVisual.Random - 0.5f);
 
-        var tmpDataTimeAccelerator = dataVisual.Data.ObjectType == ElsetObjectType.MUSK ? fasterMuskCoef : 1;
-        var timeOffset = (dataVisual.Data.T) * 100000;
-        var timeSpeed = currentSpeed * tmpDataTimeAccelerator;
-        var timePosition = timeOffset + timeElapsed * timeSpeed * normalizedCircleRadius;
-        if(_currentState == AppStates.COLLAPSE)
-        {
-            timeElapsed = Time.time - collapseStartingTime;
-            timePosition = collapseStartingTime + timeOffset + timeElapsed * timeSpeed * normalizedCircleRadius;
-        }
-        
-        var x = Mathf.Cos(timePosition) * circleRadius;
-        var y = Mathf.Sin(timePosition) * circleRadius;
+        dataVisual.CircleY = circlePosY;
+        dataVisual.NormalizedCircleY = circlePosY / maxCircleRadius;
+    }
 
-        if (float.IsNaN(x) || float.IsNaN(y))
-            Debug.LogError("NAN");
+    private void UpdatePositionFromContext(DataVisual dataVisual)
+    {
+        AssignCirclePosY(dataVisual);
+
+        var deltaTime = Time.deltaTime;
+
+        var originalX = dataVisual.Data.X;
+        var originalY = dataVisual.Data.Y;
+        var originalT = dataVisual.Data.T;
+        var lastCirclePositionX = dataVisual.LastCircleX;
+
+        var timeElapsed = Time.time - _lastLoopStart;
+
+
+        // CirclePosition calculations
+        var tmpDataTimeAccelerator = dataVisual.IsAccentVisual ? fasterMuskCoef : 1;
+        var circleCenterSlower = 0.3f + 0.7f * dataVisual.NormalizedCircleY;
+        var newCircleX = lastCirclePositionX +
+                         deltaTime * currentSpeed * tmpDataTimeAccelerator * circleCenterSlower
+            ;
+        dataVisual.LastCircleX = newCircleX;
+
+        var x = Mathf.Cos(newCircleX) * dataVisual.CircleY;
+        var y = Mathf.Sin(newCircleX) * dataVisual.CircleY;
 
         dataVisual.Visual.transform.localPosition = visualPosition.localPosition + new Vector3(x, y, 0);
+
         //give the clock value to the shader of the material of the object
-        if (currentFutureprogression > 0f)
+        var currentFutureprogress = (_currentDataLoopTime - futureStartingTime) / (1 - futureStartingTime);
+        if (currentFutureprogress > 0f && !dataVisual.IsAccentVisual)
         {
-            dataVisual.Visual.GetComponent<Renderer>().material.SetFloat("_Clock", currentFutureprogression);
+            dataVisual.RenderRef.material.SetFloat("_Clock", currentFutureprogress);
         }
     }
 
@@ -360,7 +368,8 @@ public class MainScript : MonoBehaviour
         if (_currentDataLoopTime < 0.99f)
         {
             pdConnector.SendOscMessage("/data_clock", _currentDataLoopTime);
-        }else if (_currentState == AppStates.COLLAPSE)
+        }
+        else if (_currentState == AppStates.COLLAPSE)
         {
             pdConnector.SendOscMessage("/data_clock", 0.99f);
         }
@@ -372,11 +381,12 @@ public class MainScript : MonoBehaviour
 
     private void LogCounts()
     {
-        logger.Log($"Amount of objects: {_allGpData.Count()}");
+        logger.Log($"NB original objects: {_allOrigGpData.Count()}");
+        logger.Log($"NB objects: {_allGpData.Count()}");
         logger.Log(
-            $"Amount of Real Musk data: {_allGpData.Count(gpData => !gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
+            $"NB Real Musk data: {_allGpData.Count(gpData => !gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
         logger.Log(
-            $"Amount of FAKE Musk data: {_allGpData.Count(gpData => gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
-        logger.Log($"Amount of fake data: {_allGpData.Count(gpData => gpData.IsFake)}");
+            $"NB FAKE Musk data: {_allGpData.Count(gpData => gpData.IsFake && gpData.ObjectType == ElsetObjectType.MUSK)}");
+        logger.Log($"NB fake data: {_allGpData.Count(gpData => gpData.IsFake)}");
     }
 }

@@ -25,8 +25,10 @@ namespace DataProcessing.AllGP
             {
                 throw new System.Exception("Data to extrapolate is not of type GPData");
             }
-
-            foreach (var data in gpDataToExtrapolate)
+            _gpDataToExtrapolate.Clear();
+            _extrapolatedData.Clear();
+            
+            foreach (var data in gpDataToExtrapolate.Where(gp => gp.IsFake == false))
             {
                 _gpDataToExtrapolate.Add(new GPData(data));
             }
@@ -138,6 +140,7 @@ namespace DataProcessing.AllGP
 
             //normalize and set
             NormalizeDataT();
+            SortData();
         }
 
         private void NormalizeDataT()
@@ -158,6 +161,11 @@ namespace DataProcessing.AllGP
             {
                 gpData.SetT((gpData.T - minT) / tRange);
             }
+        }
+        
+        private void SortData()
+        {
+            _extrapolatedData = _extrapolatedData.OrderBy(gpData => gpData.T).ToList();
         }
     }
 }

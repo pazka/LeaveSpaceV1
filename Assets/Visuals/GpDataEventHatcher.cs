@@ -31,17 +31,6 @@ namespace Visuals
 
         protected override DataVisual ExecuteData(DataVisual dataToTrigger)
         {
-            
-            if (dataToTrigger.Data.IsFake)
-            {
-                dataToTrigger.Visual = accentVisualPool.GetOne();
-            }
-            else
-            {
-                dataToTrigger.Visual = visualPool.GetOne();
-            }
-            
-            dataToTrigger.Visual.transform.position = new Vector3(dataToTrigger.Data.X, dataToTrigger.Data.Y, 0);
             dataToTrigger.Visual.SetActive(true);
             
             return dataToTrigger;
