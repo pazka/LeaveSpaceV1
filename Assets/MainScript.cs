@@ -45,10 +45,10 @@ public class MainScript : MonoBehaviour
     private float futureStartingTime;
     private float collapseStartingTime;
     private float endStartingTime;
-    private float endDuration;
+    private float endDuration = 20;
     private float loopDuration = 30;
     private float contemplationDelay = 5;
-    private float disappearingRate = 0.02f;
+    private float disappearingRate = 0.002f;
     private float startingBaseSpeed = 0.01f;
     private float endingBaseSpeed = 0.05f;
     private float fasterMuskCoef = 3f;
@@ -307,7 +307,7 @@ public class MainScript : MonoBehaviour
         }
 
         var maxCircleRadius = (float)Configuration.GetConfig().maxCircleDiam / 4;
-        var minCircleRadius = Configuration.GetConfig().minCircleDiam / 4;
+        var minCircleRadius = Configuration.GetConfig().minCircleDiam;
 
         float circlePosY;
         if (!dataVisual.Data.IsFake)
