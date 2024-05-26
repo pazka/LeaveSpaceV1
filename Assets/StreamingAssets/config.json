@@ -1,0 +1,27 @@
+﻿{
+  "isDev" : false,
+  "offsetX" : 0,
+  "offsetY" : 30,
+  "scaleX" : 1,
+  "scaleY" : 1,
+  
+  "inPort": 10301,
+  "outIp": "127.0.0.1",
+  "outPort": 10300,
+  
+  "loopDuration": 720,
+  "contemplationDelay" : 10,
+  "endDuration" : 20,
+
+  "disappearingRate": 0.002,
+  
+  "startingBaseSpeed" : 0.01,
+  "endingBaseSpeed" : 0.02,
+  "fasterMuskCoef" : 3,
+  
+  "minCircleDiam" : 50,
+  "maxCircleDiam" : 1920,
+  
+  "baseColor": [1,1,1],
+  "accentColor" :[1,1,1]
+}

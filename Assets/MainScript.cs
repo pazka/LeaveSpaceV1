@@ -48,7 +48,7 @@ public class MainScript : MonoBehaviour
     private float endDuration = 20;
     private float loopDuration = 30;
     private float contemplationDelay = 5;
-    private float disappearingRate = 0.002f;
+    private float disappearingRate = 0.008f;
     private float startingBaseSpeed = 0.01f;
     private float endingBaseSpeed = 0.05f;
     private float fasterMuskCoef = 3f;
@@ -373,9 +373,9 @@ public class MainScript : MonoBehaviour
         {
             pdConnector.SendOscMessage("/data_clock", 0.99f);
         }
-        else if (_currentState == AppStates.CONTEMPLATION)
+        else if (_currentState == AppStates.END)
         {
-            pdConnector.SendOscMessage("/data_clock", 0.100f);
+            pdConnector.SendOscMessage("/data_clock", 1f);
         }
     }
 
