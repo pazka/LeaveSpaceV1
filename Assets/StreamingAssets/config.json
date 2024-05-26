@@ -13,7 +13,7 @@
   "contemplationDelay" : 10,
   "endDuration" : 20,
 
-  "disappearingRate": 0.002,
+  "disappearingRate": 0.008,
   
   "startingBaseSpeed" : 0.01,
   "endingBaseSpeed" : 0.02,
