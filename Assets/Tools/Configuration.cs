@@ -20,6 +20,8 @@ namespace Tools
         public float fasterMuskCoef;
         public float disappearingRate;
         public float minCircleDiam;
+        public float muskStarSize;
+        public float satStarSize;
         public float maxCircleDiam;
         public bool isDev;
         public float[] baseColor;
@@ -42,6 +44,8 @@ namespace Tools
             float endingBaseSpeed,
             float minCircleDiam,
             float maxCircleDiam,
+            float muskStarSize,
+            float satStarSize,
             bool isDev,
             float[] baseColor,
             float[] accentColor
@@ -64,6 +68,8 @@ namespace Tools
             this.fasterMuskCoef = fasterMuskCoef;
             this.minCircleDiam = minCircleDiam;
             this.maxCircleDiam = maxCircleDiam;
+            this.muskStarSize = muskStarSize;
+            this.satStarSize = satStarSize;
             this.baseColor = baseColor;
             this.accentColor = accentColor;
         }

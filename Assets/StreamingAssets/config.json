@@ -19,8 +19,11 @@
   "endingBaseSpeed" : 0.02,
   "fasterMuskCoef" : 3,
   
-  "minCircleDiam" : 50,
-  "maxCircleDiam" : 1920,
+  "minCircleDiam" : 70,
+  "maxCircleDiam" : 2160,
+  
+  "muskStarSize" : 3,
+  "satStarSize" : 4,
   
   "baseColor": [1,1,1],
   "accentColor" :[1,1,1]

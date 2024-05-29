@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Globalization;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,16 +19,27 @@ public class DataVisual
     public float CircleY;
     public float NormalizedCircleY;
     public bool IsAccentVisual;
+    private JsonConfiguration config;
 
     public DataVisual(GPData data, GameObject visual)
     {
-        this.Data = data;
-        this.Visual = visual;
         Random = new Random().NextDouble();
         LastCircleX = data.T * 10000;
         CircleY = 0;
-        RenderRef = Visual.GetComponent<Renderer>();
+        RenderRef = visual.GetComponent<Renderer>();
         IsAccentVisual = IsDataAccent(data);
+        config = Configuration.GetConfig();
+        
+        this.Data = data;
+        this.Visual = visual;
+
+        if(IsAccentVisual)
+        {
+            this.Visual.transform.localScale = new Vector3(config.muskStarSize,config.muskStarSize,1);
+        }else
+        {
+            this.Visual.transform.localScale = new Vector3(config.satStarSize,config.satStarSize,1);
+        }
     }
 
     static public bool IsDataAccent(GPData data)
