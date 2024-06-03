@@ -54,5 +54,6 @@ Then we uses those data to place the object and move in around ( the meaning of 
 
 ### V1.5
 
-- [] Make first sequence increase speed gradually 
-- [] make first sequence dots change size gradually
+- ✅ Make first sequence increase speed gradually 
+- ✅ make first sequence dots change size gradually
+- [] Link star size to distance from earth of the object

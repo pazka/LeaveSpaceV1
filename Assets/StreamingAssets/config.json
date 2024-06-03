@@ -10,21 +10,21 @@
   "outPort": 10300,
   
   "loopDuration": 720,
-  "contemplationDelay" : 10,
+  "contemplationDelay" : 1,
   "endDuration" : 20,
 
   "disappearingRate": 0.008,
   
-  "startBaseSpeed" : 0.01,
-  "midBaseSpeed" : 0.1,
+  "startBaseSpeed" : 0.005,
+  "midBaseSpeed" : 0.175,
   "endingBaseSpeed" : 10,
   "fasterMuskCoef" : 3,
   
   "minCircleDiam" : 70,
   "maxCircleDiam" : 2160,
   
-  "startStarSize" : 8,
-  "midStarSize" : 2,
+  "startStarSize" : 12,
+  "midStarSize" : 3,
   "muskStarSizeCoef" : 0.9,
   
   "baseColor": [1,1,1],

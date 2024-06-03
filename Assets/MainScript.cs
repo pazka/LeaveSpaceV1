@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Numerics;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -12,6 +14,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using Visuals;
 using Logger = Tools.Logger;
+using Vector3 = UnityEngine.Vector3;
 
 public enum AppStates
 {
@@ -351,9 +354,12 @@ public class MainScript : MonoBehaviour
 
         var x = Mathf.Cos(newCircleX) * dataVisual.CircleY;
         var y = Mathf.Sin(newCircleX) * dataVisual.CircleY;
+        var circleScaleVariance = 0.5f + (float)dataVisual.Random;
+        var circleScale = new Vector3(circleScaleVariance,circleScaleVariance,1);
+        circleScale.Scale(currentCircleScale);
 
         dataVisual.Visual.transform.localPosition = visualPosition.localPosition + new Vector3(x, y, 0);
-        dataVisual.Visual.transform.localScale = currentCircleScale;
+        dataVisual.Visual.transform.localScale = circleScale;
 
         //give the clock value to the shader of the material of the object
         var currentFutureprogress = (_currentDataLoopTime - futureStartingTime) / (1 - futureStartingTime);
