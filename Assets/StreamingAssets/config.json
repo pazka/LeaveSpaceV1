@@ -15,15 +15,17 @@
 
   "disappearingRate": 0.008,
   
-  "startingBaseSpeed" : 0.01,
-  "endingBaseSpeed" : 0.02,
+  "startBaseSpeed" : 0.01,
+  "midBaseSpeed" : 0.1,
+  "endingBaseSpeed" : 10,
   "fasterMuskCoef" : 3,
   
   "minCircleDiam" : 70,
   "maxCircleDiam" : 2160,
   
-  "muskStarSize" : 3,
-  "satStarSize" : 4,
+  "startStarSize" : 8,
+  "midStarSize" : 2,
+  "muskStarSizeCoef" : 0.9,
   
   "baseColor": [1,1,1],
   "accentColor" :[1,1,1]
