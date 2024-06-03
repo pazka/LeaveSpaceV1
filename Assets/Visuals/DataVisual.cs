@@ -35,10 +35,11 @@ public class DataVisual
 
         if(IsAccentVisual)
         {
-            this.Visual.transform.localScale = new Vector3(config.muskStarSize,config.muskStarSize,1);
+            var muskSize = config.midStarSize * config.muskStarSizeCoef;
+            this.Visual.transform.localScale = new Vector3(muskSize,muskSize,1);
         }else
         {
-            this.Visual.transform.localScale = new Vector3(config.satStarSize,config.satStarSize,1);
+            this.Visual.transform.localScale = new Vector3(config.midStarSize,config.midStarSize,1);
         }
     }
 

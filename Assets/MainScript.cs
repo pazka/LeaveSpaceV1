@@ -40,18 +40,13 @@ public class MainScript : MonoBehaviour
     private List<GPData> _allOrigGpData;
     private List<GPData> _allGpData;
     private EventHatcher<DataVisual> _eventHatcher;
+    private JsonConfiguration config;
     private float currentSpeed;
+    private Vector3 currentCircleScale;
     private float muskApparitionTime;
     private float futureStartingTime;
     private float collapseStartingTime;
     private float endStartingTime;
-    private float endDuration = 20;
-    private float loopDuration = 30;
-    private float contemplationDelay = 5;
-    private float disappearingRate = 0.008f;
-    private float startingBaseSpeed = 0.01f;
-    private float endingBaseSpeed = 0.05f;
-    private float fasterMuskCoef = 3f;
     private Queue<DataVisual> _hatchedDataVisuals;
     private Queue<DataVisual> _notYetHatchedDataVisuals;
     private IDataExtrapolator _extrapolator;
@@ -64,8 +59,8 @@ public class MainScript : MonoBehaviour
 
     public void Start()
     {
-        SetValueFromConfig();
-        currentSpeed = startingBaseSpeed;
+        config = Configuration.GetConfig();
+        currentSpeed = config.midBaseSpeed;
         if (Display.displays.Length > 1)
             Display.displays[1].Activate();
 
@@ -89,21 +84,6 @@ public class MainScript : MonoBehaviour
         InitLoop();
     }
 
-    private void SetValueFromConfig()
-    {
-        if (Configuration.GetConfig().isDev)
-            return;
-
-        loopDuration = Configuration.GetConfig().loopDuration;
-        contemplationDelay = Configuration.GetConfig().contemplationDelay;
-        startingBaseSpeed = Configuration.GetConfig().startingBaseSpeed;
-        endingBaseSpeed = Configuration.GetConfig().endingBaseSpeed;
-        fasterMuskCoef = Configuration.GetConfig().fasterMuskCoef;
-        startingBaseSpeed = Configuration.GetConfig().startingBaseSpeed;
-        disappearingRate = Configuration.GetConfig().disappearingRate;
-        endDuration = Configuration.GetConfig().endDuration;
-    }
-
     private void SetupTimeCodes()
     {
         var firstMuskData = _allGpData.FirstOrDefault(d => d.ObjectType == ElsetObjectType.MUSK);
@@ -119,6 +99,7 @@ public class MainScript : MonoBehaviour
     private void CheckForStateChange()
     {
         var elapsedTime = Time.time - _lastLoopStart;
+        
         if (_currentState == AppStates.NORMAL && _currentDataLoopTime >= muskApparitionTime)
         {
             _currentState = AppStates.NORMAL_MUSK;
@@ -131,12 +112,12 @@ public class MainScript : MonoBehaviour
         }
         else if (_currentState == AppStates.FUTURE &&
                  _notYetHatchedDataVisuals.Count == 0 &&
-                 elapsedTime >= loopDuration)
+                 elapsedTime >= config.loopDuration)
         {
             _currentState = AppStates.CONTEMPLATION;
             logger.Log($"Contemplation : {_currentDataLoopTime} / {_currentFullLoopTime}");
         }
-        else if (elapsedTime >= loopDuration + contemplationDelay &&
+        else if (elapsedTime >= config.loopDuration + config.contemplationDelay &&
                  _currentState == AppStates.CONTEMPLATION)
         {
             collapseStartingTime = Time.time;
@@ -149,7 +130,7 @@ public class MainScript : MonoBehaviour
             _currentState = AppStates.END;
             logger.Log($"End : {_currentDataLoopTime} / {_currentFullLoopTime}");
         }
-        else if (_currentState == AppStates.END && Time.time - endStartingTime > endDuration)
+        else if (_currentState == AppStates.END && Time.time - endStartingTime > config.endDuration)
         {
             InitLoop();
             _currentState = AppStates.NORMAL;
@@ -159,7 +140,7 @@ public class MainScript : MonoBehaviour
 
     private void InitLoop()
     {
-        currentSpeed = startingBaseSpeed;
+        currentSpeed = config.midBaseSpeed;
         _lastLoopStart = Time.time;
         _allGpData = (_extrapolator.RetrieveExtrapolation() as IEnumerable<GPData>).ToList();
         _hatchedDataVisuals = new Queue<DataVisual>(_allGpData.Count);
@@ -192,12 +173,14 @@ public class MainScript : MonoBehaviour
 
         if (_currentState == AppStates.NORMAL)
         {
+            AdaptSatCircleSize();
+            AccelerateSatVisual();
             ForwardVisual();
             UpdateVisualPositions();
         }
         else if (_currentState == AppStates.NORMAL_MUSK || _currentState == AppStates.FUTURE)
         {
-            AccelerateVisual();
+            AccelerateMuskVisual();
             ForwardVisual();
             UpdateVisualPositions();
         }
@@ -218,8 +201,8 @@ public class MainScript : MonoBehaviour
 
     private void UpdateCurrentIterationTime()
     {
-        _currentDataLoopTime = (Time.time - _lastLoopStart) / (loopDuration);
-        _currentFullLoopTime = (Time.time - _lastLoopStart) / (loopDuration + contemplationDelay);
+        _currentDataLoopTime = (Time.time - _lastLoopStart) / (config.loopDuration);
+        _currentFullLoopTime = (Time.time - _lastLoopStart) / (config.loopDuration + config.contemplationDelay);
         progressBarScript.SetT(_currentFullLoopTime);
     }
 
@@ -238,19 +221,35 @@ public class MainScript : MonoBehaviour
         }
     }
 
-    private void AccelerateVisual()
+    private void AdaptSatCircleSize()
+    {
+        var normalizedProgression = (_currentDataLoopTime) / muskApparitionTime;
+
+        var tmpCircleSize = Mathf.Lerp(config.startStarSize, config.midStarSize, normalizedProgression);
+        currentCircleScale.Set(tmpCircleSize, tmpCircleSize, 1);
+    }
+
+    private void AccelerateSatVisual()
+    {
+        var normalizedProgression =
+            (_currentDataLoopTime) / muskApparitionTime;
+
+        currentSpeed = Mathf.Lerp(config.startBaseSpeed, config.midBaseSpeed, normalizedProgression);
+    }
+
+    private void AccelerateMuskVisual()
     {
         var rangeOfTimeSinceMuskApparition = 1 - muskApparitionTime;
         var normalizedProgression =
             (_currentDataLoopTime - muskApparitionTime) / rangeOfTimeSinceMuskApparition;
 
-        currentSpeed = Mathf.Lerp(startingBaseSpeed, endingBaseSpeed, normalizedProgression);
+        currentSpeed = Mathf.Lerp(config.midBaseSpeed, config.endingBaseSpeed, normalizedProgression);
     }
 
     private void EaseInSlowingVisual()
     {
         var returningProgress = _hatchedDataVisuals.Count / (float)_allGpData.Count;
-        currentSpeed = endingBaseSpeed * returningProgress;
+        currentSpeed = config.endingBaseSpeed * returningProgress;
         UpdateVisualPositions();
     }
 
@@ -263,7 +262,7 @@ public class MainScript : MonoBehaviour
         var disappearEverything = currentCount <= 300;
         var fasterDisappear = currentCount <= 10000;
 
-        var removeCoef = fasterDisappear ? 0.05f : disappearingRate;
+        var removeCoef = fasterDisappear ? 0.05f : config.disappearingRate;
 
         for (var i = 0; i < currentCount; i++)
         {
@@ -343,7 +342,7 @@ public class MainScript : MonoBehaviour
 
 
         // CirclePosition calculations
-        var tmpDataTimeAccelerator = dataVisual.IsAccentVisual ? fasterMuskCoef : 1;
+        var tmpDataTimeAccelerator = dataVisual.IsAccentVisual ? config.fasterMuskCoef : 1;
         var circleCenterSlower = 0.3f + 0.7f * dataVisual.NormalizedCircleY;
         var newCircleX = lastCirclePositionX +
                          deltaTime * currentSpeed * tmpDataTimeAccelerator * circleCenterSlower
@@ -354,6 +353,7 @@ public class MainScript : MonoBehaviour
         var y = Mathf.Sin(newCircleX) * dataVisual.CircleY;
 
         dataVisual.Visual.transform.localPosition = visualPosition.localPosition + new Vector3(x, y, 0);
+        dataVisual.Visual.transform.localScale = currentCircleScale;
 
         //give the clock value to the shader of the material of the object
         var currentFutureprogress = (_currentDataLoopTime - futureStartingTime) / (1 - futureStartingTime);

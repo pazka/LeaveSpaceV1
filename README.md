@@ -51,3 +51,8 @@ Then we uses those data to place the object and move in around ( the meaning of 
 - ✅ Musk extrapolated
 - ✅ 1 musk aparait -> increase chance of debris apparition 
 - ✅ debris apparait -> increase chance of debris apparition
+
+### V1.5
+
+- [] Make first sequence increase speed gradually 
+- [] make first sequence dots change size gradually

@@ -15,13 +15,15 @@ namespace Tools
         public float loopDuration;
         public float endDuration;
         public float contemplationDelay;
-        public float startingBaseSpeed;
+        public float startBaseSpeed;
+        public float midBaseSpeed;
         public float endingBaseSpeed;
         public float fasterMuskCoef;
         public float disappearingRate;
         public float minCircleDiam;
-        public float muskStarSize;
-        public float satStarSize;
+        public float muskStarSizeCoef;
+        public float startStarSize;
+        public float midStarSize;
         public float maxCircleDiam;
         public bool isDev;
         public float[] baseColor;
@@ -38,14 +40,16 @@ namespace Tools
             float loopDuration,
             float contemplationDelay,
             float endDuration,
-            float startingBaseSpeed,
+            float midBaseSpeed,
+            float startBaseSpeed,
             float fasterMuskCoef,
             float disappearingRate,
             float endingBaseSpeed,
             float minCircleDiam,
             float maxCircleDiam,
-            float muskStarSize,
-            float satStarSize,
+            float startStarSize,
+            float muskStarSizeCoef,
+            float midStarSize,
             bool isDev,
             float[] baseColor,
             float[] accentColor
@@ -63,13 +67,15 @@ namespace Tools
             this.endDuration = endDuration;
             this.disappearingRate = disappearingRate;
             this.endingBaseSpeed = endingBaseSpeed;
+            this.startBaseSpeed = startBaseSpeed;
             this.isDev = isDev;
-            this.startingBaseSpeed = startingBaseSpeed;
+            this.midBaseSpeed = midBaseSpeed;
             this.fasterMuskCoef = fasterMuskCoef;
             this.minCircleDiam = minCircleDiam;
             this.maxCircleDiam = maxCircleDiam;
-            this.muskStarSize = muskStarSize;
-            this.satStarSize = satStarSize;
+            this.startStarSize = startStarSize;
+            this.muskStarSizeCoef = muskStarSizeCoef;
+            this.midStarSize = midStarSize;
             this.baseColor = baseColor;
             this.accentColor = accentColor;
         }
