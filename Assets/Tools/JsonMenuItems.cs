@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -7,6 +7,7 @@ namespace Tools
     public class JsonMenuItems : MonoBehaviour
     {
         private readonly Dictionary<string, string> allValues = new Dictionary<string, string>();
+        private string _content = string.Empty;
 
         private void Start()
         {
@@ -20,14 +21,14 @@ namespace Tools
                 i++;
             }
 
-            var config = Configuration.GetConfig();
-            var content = Configuration.ConfigContent;
+            RuntimeConfig.Get();
+            _content = string.Join("\n", Config.GetAllKeys());
         }
 
         private void OnGUI()
         {
             // Make a text field that modifies stringToEdit.
-            var content = Configuration.ConfigContent;
+            var content = _content;
 
             var i = 0;
             foreach (var value in allValues)

@@ -28,7 +28,7 @@ public class DataVisual
         CircleY = 0;
         RenderRef = visual.GetComponent<Renderer>();
         IsAccentVisual = IsDataAccent(data);
-        config = Configuration.GetConfig();
+        config = RuntimeConfig.Get();
         
         this.Data = data;
         this.Visual = visual;

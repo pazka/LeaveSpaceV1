@@ -28,5 +28,8 @@
   "muskStarSizeCoef" : 0.9,
   
   "baseColor": [1,1,1],
-  "accentColor" :[1,1,1]
+  "accentColor" :[1,1,1],
+
+  "camera1Offset" : [0,0],
+  "camera2Offset" : [0,0]
 }

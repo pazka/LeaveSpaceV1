@@ -1,4 +1,4 @@
-﻿using DataProcessing.AllGP;
+using DataProcessing.AllGP;
 using DataProcessing.Generic;
 using Tools;
 using UnityEngine;
@@ -18,8 +18,9 @@ namespace Visuals
             visualPool.PreloadNObjects(34000);
             accentVisualPool.PreloadNObjects(120000);
             
-            float[] newBaseColor = Configuration.GetConfig().baseColor;
-            float[] newAccentColor = Configuration.GetConfig().accentColor;
+            var config = RuntimeConfig.Get();
+            float[] newBaseColor = config.baseColor;
+            float[] newAccentColor = config.accentColor;
             baseColor = new Color(newBaseColor[0], newBaseColor[1], newBaseColor[2]);
             accentColor = new Color(newAccentColor[0], newAccentColor[1], newAccentColor[2]);
         }

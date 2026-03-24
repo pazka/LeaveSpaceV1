@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Tools
 {
@@ -10,7 +10,7 @@ namespace Tools
         // Start is called before the first frame update
         private void Start()
         {
-            var config = Configuration.GetConfig();
+            var config = RuntimeConfig.Get();
             isDisplayed = config.isDev;
             
             //find object with name "ProgressBar" and set it to progressBar

@@ -62,7 +62,7 @@ public class MainScript : MonoBehaviour
 
     public void Start()
     {
-        config = Configuration.GetConfig();
+        config = RuntimeConfig.Get();
         currentSpeed = config.midBaseSpeed;
         if (Display.displays.Length > 1)
             Display.displays[1].Activate();
@@ -308,8 +308,8 @@ public class MainScript : MonoBehaviour
             return;
         }
 
-        var maxCircleRadius = (float)Configuration.GetConfig().maxCircleDiam / 4;
-        var minCircleRadius = Configuration.GetConfig().minCircleDiam;
+        var maxCircleRadius = config.maxCircleDiam / 4;
+        var minCircleRadius = config.minCircleDiam;
 
         float circlePosY;
         if (!dataVisual.Data.IsFake)

@@ -1,4 +1,4 @@
-﻿using Tools;
+using Tools;
 using UnityEngine;
 
 namespace Visuals
@@ -7,7 +7,7 @@ namespace Visuals
     {
         private void Start()
         {
-            var config = Configuration.GetConfig();
+            var config = RuntimeConfig.Get();
             transform.position += new Vector3(config.offsetX, config.offsetY);
 
             transform.localScale =

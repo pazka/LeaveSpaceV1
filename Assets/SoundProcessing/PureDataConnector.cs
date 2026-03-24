@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Tools;
 using UnityEngine;
 using Logger = Tools.Logger;
@@ -49,7 +49,7 @@ namespace SoundProcessing
 
         private void OpenConnection()
         {
-            config = Configuration.GetConfig();
+            config = RuntimeConfig.Get();
             try
             {
                 osc = new OSC(config.inPort, config.outIp, config.outPort);

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using UnityEngine;
 
 namespace Tools
@@ -81,12 +82,14 @@ namespace Tools
         }
     }
 
+    [Obsolete("Use Config", true)]
     public static class Configuration
     {
         private static readonly string ConfigPath = Application.dataPath + "/StreamingAssets/config.json";
         public static string ConfigContent;
         private  static JsonConfiguration _config;
 
+        [Obsolete("Use Config", true)]
         public static JsonConfiguration GetConfig()
         {
             if(_config != null) return _config;
