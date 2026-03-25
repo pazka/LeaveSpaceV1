@@ -13,7 +13,7 @@ namespace Tools
         {
             var offset = Config.Get(
                 secondary ? "camera2Offset" : "camera1Offset",
-                secondary ? new[] { 0f, 0f } : new[] { 0f, 1080f }
+                 new[] { 0f, 0f } 
             );
             var offsetTransform = new Vector3(offset[0], offset[1], gameObject.transform.position.z);
             gameObject.transform.SetLocalPositionAndRotation(offsetTransform, gameObject.transform.rotation);
